@@ -108,7 +108,7 @@ padding-bottom: 20px;
 
 .modal-contenido-opal-horizontal {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   background: white;
   border-radius: 16px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
@@ -119,58 +119,70 @@ padding-bottom: 20px;
 }
 
 .imagen-lateral {
-  width: 45%;
-  min-width: 45%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f9fa;
-  padding: 10px;
-  border-right: 1px solid #eee;
+    width: 70%;
+    min-width: 70%;
+    height: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    padding: 0px;
+    border-right: 0px solid #eee;
+    margin-left: 17%;
+    margin-top: 2%;
 }
 
 .imagen-lateral img {
   width: 100%;
   border-radius: 10px;
   object-fit: cover;
-  max-height: 300px;
+  max-height: 280px;
 }
 
 .campos-laterales {
   flex: 1;
   padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px 14px;
+  align-items: center;
 }
-
+.campos-laterales h2 {
+  grid-column: span 2;
+  margin: 1px;
+  padding: 0;
+  text-align: center;
+}
 .campos-laterales label {
   font-size: 14px;
   font-weight: bold;
   color: #444;
+  text-align: right;
 }
 
 .campos-laterales input,
 .campos-laterales select {
-  padding: 10px;
+  padding: 5px;
   border: none;
   background: #f3f4f6;
   border-radius: 8px;
   font-size: 15px;
   outline: none;
+  width: 80%;
+  margin: 0;
 }
 
 .modal-botones {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  grid-column: span 2;
+  margin-top: 2px;
 }
 
 .modal-botones button {
   padding: 10px;
-  font-size: 15px;
+  font-size: 14px;
   border: none;
   border-radius: 8px;
   background-color: #007bff;
