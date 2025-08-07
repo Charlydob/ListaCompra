@@ -96,6 +96,7 @@ input.addEventListener("input", () => {
   renderLista(texto);
 });
 
+// LISTA DE PRODUCTOS:
 function renderLista(filtro = "", lista = productos) {
   contenedorLista.innerHTML = "";
   calcularTotalEstimado();
@@ -115,7 +116,14 @@ function renderLista(filtro = "", lista = productos) {
     const titulo = document.createElement("div");
     titulo.className = "supermercado-titulo";
     titulo.textContent = superKey;
-    grupo.appendChild(titulo);
+    titulo.style.cursor = "pointer";
+
+    const contenedorTarjetas = document.createElement("div");
+    contenedorTarjetas.className = "contenedor-tarjetas";
+
+    titulo.addEventListener("click", () => {
+      contenedorTarjetas.classList.toggle("oculto");
+    });
 
     // Ordenar por nombre, pendientes arriba
     const tarjetas = agrupados[superKey].sort((a, b) => {
@@ -139,46 +147,41 @@ function renderLista(filtro = "", lista = productos) {
       });
 
       const imagen = document.createElement("img");
-imagen.src = prod.imagenURL || "https://placehold.co/50";
+      imagen.src = prod.imagenURL || "https://placehold.co/50";
 
       const nombre = document.createElement("div");
       nombre.className = "nombre-producto";
       nombre.textContent = prod.nombre;
 
+      const contador = document.createElement("div");
+      contador.className = "contador";
+      contador.textContent = prod.cantidad;
 
-    //   👇 Scroll táctil (drag vertical):
+      let startY = null;
 
-const contador = document.createElement("div");
-contador.className = "contador";
-contador.textContent = prod.cantidad;
+      contador.addEventListener("touchstart", (e) => {
+        startY = e.touches[0].clientY;
+        e.preventDefault();
+      }, { passive: false });
 
-let startY = null;
+      contador.addEventListener("touchend", (e) => {
+        if (startY === null) return;
 
-contador.addEventListener("touchstart", (e) => {
-  startY = e.touches[0].clientY;
-  e.preventDefault(); // 💥 evita scroll
-}, { passive: false }); // ⚠️ necesario para que funcione e.preventDefault en móviles
+        const endY = e.changedTouches[0].clientY;
+        const deltaY = endY - startY;
 
-contador.addEventListener("touchend", (e) => {
-  if (startY === null) return;
+        if (Math.abs(deltaY) < 15) return;
 
-  const endY = e.changedTouches[0].clientY;
-  const deltaY = endY - startY;
+        if (deltaY > 0) {
+          prod.cantidad++;
+        } else {
+          prod.cantidad = Math.max(1, prod.cantidad - 1);
+        }
 
-  if (Math.abs(deltaY) < 15) return; // gesto mínimo
-
-  if (deltaY > 0) {
-    prod.cantidad++;
-  } else {
-    prod.cantidad = Math.max(1, prod.cantidad - 1);
-  }
-guardarEnFirebase();
-
-  startY = null;
-  renderLista();
-}, { passive: false });
-
-
+        guardarEnFirebase();
+        startY = null;
+        renderLista();
+      }, { passive: false });
 
       tarjeta.appendChild(checkbox);
       tarjeta.appendChild(imagen);
@@ -186,18 +189,20 @@ guardarEnFirebase();
       tarjeta.appendChild(contador);
 
       tarjeta.addEventListener("click", (e) => {
-        if (e.target === checkbox) return; // no abrir editor si fue el check
-        // abrir modal de edición (a implementar)
-         abrirModalEdicion(prod);
+        if (e.target === checkbox) return;
+        abrirModalEdicion(prod);
       });
 
-      grupo.appendChild(tarjeta);
+      contenedorTarjetas.appendChild(tarjeta);
     }
 
+    grupo.appendChild(titulo);
+    grupo.appendChild(contenedorTarjetas);
     contenedorLista.appendChild(grupo);
   }
 }
-// MODAL EDICION TARJETA
+
+// MODAL EDICION TARJETA:
 let productoActual = null;
 
 // Abrir modal con datos
