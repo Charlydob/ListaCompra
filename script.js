@@ -210,10 +210,17 @@ function abrirModalEdicion(prod) {
     .map(s => `<option ${s === prod.supermercado ? "selected" : ""}>${s}</option>`)
     .join("");
   document.getElementById("modal-categoria").value = prod.categoria || "";
-document.getElementById("modal-preview-imagen").src = prod.imagenURL || "https://placehold.co/150";
+
+  // 👉 Resetea imagen
+  const preview = document.getElementById("modal-preview-imagen");
+  const inputFile = document.getElementById("modal-imagen");
+
+  preview.src = prod.imagenURL || "https://placehold.co/150";
+  inputFile.value = "";
 
   document.getElementById("modal-edicion").classList.remove("oculto");
 }
+
 
 // Guardar cambios
 document.getElementById("btn-guardar-cambios").addEventListener("click", () => {
