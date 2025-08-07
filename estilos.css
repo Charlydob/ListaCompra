@@ -1,4 +1,13 @@
 /* estilos.css - Estilo Opal */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  touch-action: manipulation;
+}
+
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
