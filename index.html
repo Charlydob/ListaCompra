@@ -10,26 +10,6 @@
 <meta name="theme-color" content="transparent">
 
 </head>
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBDcOCQ0OrAaxr-yhhD5iVHqegwvhpjZaE",
-    authDomain: "listacompra-6d0b3.firebaseapp.com",
-    databaseURL: "https://listacompra-6d0b3-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "listacompra-6d0b3",
-    storageBucket: "listacompra-6d0b3.appspot.com",
-    messagingSenderId: "175496423309",
-    appId: "1:175496423309:web:509b2eb64961245536bfc4"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  const rutaProductos = "productos/Charly"; // cambiar si quieres multiusuario
-</script>
 <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js")

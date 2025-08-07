@@ -3,6 +3,18 @@ const selectSuper = document.getElementById("selector-super");
 const btnAgregar = document.getElementById("btn-agregar");
 const contenedorLista = document.getElementById("lista-productos");
 const rutaProductos = "productos/Charly"; 
+const firebaseConfig = {
+  apiKey: "AIzaSyBDcOCQ0OrAaxr-yhhD5iVHqegwvhpjZaE",
+  authDomain: "listacompra-6d0b3.firebaseapp.com",
+  databaseURL: "https://listacompra-6d0b3-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "listacompra-6d0b3",
+  storageBucket: "listacompra-6d0b3.appspot.com",
+  messagingSenderId: "175496423309",
+  appId: "1:175496423309:web:509b2eb64961245536bfc4"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 
 let productos = []; // Lista total
@@ -32,22 +44,26 @@ function cargarDesdeLocalStorage() {
     renderLista();
   }
 }
-
+// AÑADIR CREAR PRODUCTOS
 btnAgregar.addEventListener("click", () => {
+  console.log("🚀 Botón presionado");
+
   const nombre = input.value.trim().toLowerCase();
   const supermercado = selectSuper.value;
 
-  if (!nombre || !supermercado) return;
+  if (!nombre || !supermercado) {
+    console.log("⚠️ Falta nombre o supermercado");
+    return;
+  }
 
-  // Buscar si ya existe producto similar
   const yaExiste = productos.filter(p =>
     p.nombre.toLowerCase().includes(nombre)
   );
 
   if (yaExiste.length > 0) {
-    renderLista(nombre); // Mostrar coincidencias
+    console.log("🔍 Producto ya existe, mostrando coincidencias");
+    renderLista(nombre);
   } else {
-    // Crear producto nuevo
     const nuevoProducto = {
       id: Date.now().toString(),
       nombre: nombre,
@@ -56,15 +72,17 @@ btnAgregar.addEventListener("click", () => {
       precio: 0,
       comprado: false,
       imagenURL: "",
-      categoria: null // A implementar luego
+      categoria: null
     };
     productos.push(nuevoProducto);
+    console.log("✅ Producto añadido:", nuevoProducto);
     guardarEnFirebase();
     renderLista();
   }
 
   input.value = "";
 });
+
 
 // Filtro dinámico al escribir
 input.addEventListener("input", () => {
