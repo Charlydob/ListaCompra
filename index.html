@@ -30,6 +30,13 @@
 
   const rutaProductos = "productos/Charly"; // cambiar si quieres multiusuario
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log('SW registrado'))
+    .catch(err => console.error('SW falló', err));
+}
+</script>
 
 <body>
   <div id="app">
