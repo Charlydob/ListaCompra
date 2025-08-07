@@ -56,7 +56,7 @@ header {
   font-size: 18px;
   margin-bottom: 10px;
   padding: 6px 12px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(111, 126, 156, 0.425);
     box-shadow: 0 0 8px rgba(117, 139, 111, 0.404);
 
   border-radius: 6px;
@@ -96,7 +96,7 @@ header {
   position: absolute;
   top: 8px;
   left: 8px;
-  transform: scale(1.2);
+  transform: scale(1.4);
   accent-color: #00c6ff;
 }
 
