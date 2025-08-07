@@ -7,7 +7,12 @@
   <link rel="stylesheet" href="estilos.css" />
     <link rel="apple-touch-icon" href="icono.png">
       <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4590ff">
+      <meta name="theme-color" content="#4590ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)">
+<script>
+  const opalBlue = getComputedStyle(document.documentElement).getPropertyValue('--opal-blue').trim();
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', opalBlue);
+</script>
 
 </head>
 <!-- SDKs de Firebase -->
