@@ -48,7 +48,9 @@ function cargarDesdeLocalStorage() {
 btnAgregar.addEventListener("click", () => {
   console.log("🚀 Botón presionado");
 
-  const nombre = input.value.trim().toLowerCase();
+const nombre = input.value.trim();
+const nombreCapitalizado = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
+
   const supermercado = selectSuper.value;
 
   if (!nombre || !supermercado) {
@@ -66,7 +68,7 @@ btnAgregar.addEventListener("click", () => {
   } else {
     const nuevoProducto = {
       id: Date.now().toString(),
-      nombre: nombre,
+nombre: nombreCapitalizado,
       supermercado: supermercado,
       cantidad: 1,
       precio: 0,
@@ -90,12 +92,13 @@ input.addEventListener("input", () => {
   renderLista(texto);
 });
 
-function renderLista(filtro = "") {
+function renderLista(filtro = "", lista = productos) {
   contenedorLista.innerHTML = "";
-calcularTotalEstimado();
+  calcularTotalEstimado();
+
   // Agrupar por supermercado
   const agrupados = {};
-  for (let prod of productos) {
+  for (let prod of lista) {
     if (filtro && !prod.nombre.toLowerCase().includes(filtro)) continue;
     if (!agrupados[prod.supermercado]) agrupados[prod.supermercado] = [];
     agrupados[prod.supermercado].push(prod);
@@ -217,6 +220,13 @@ document.getElementById("btn-guardar-cambios").addEventListener("click", () => {
   productoActual.supermercado = document.getElementById("modal-super").value;
   productoActual.categoria = document.getElementById("modal-categoria").value.trim();
 
+  // 🔥 Añadir nueva categoría al listado si no existe
+  const nuevaCategoria = productoActual.categoria;
+  if (nuevaCategoria && !categorias.includes(nuevaCategoria)) {
+    categorias.push(nuevaCategoria);
+    actualizarSelectorCategorias();
+  }
+
   const archivo = document.getElementById("modal-imagen").files[0];
   if (archivo) {
     subirImagenACloudinary(archivo).then(url => {
@@ -232,6 +242,28 @@ document.getElementById("btn-guardar-cambios").addEventListener("click", () => {
     renderLista();
   }
 });
+function actualizarSelectorCategorias() {
+  const select = document.getElementById("filtro-categoria");
+  select.innerHTML = '<option value="">Todas las categoría</option>';
+  categorias.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    select.appendChild(option);
+  });
+}
+document.getElementById("filtro-categoria").addEventListener("change", (e) => {
+  const filtro = e.target.value.toLowerCase();
+  renderListaCategoria(filtro);
+});
+function renderListaCategoria(categoria = "") {
+  const productosFiltrados = categoria
+    ? productos.filter(p => (p.categoria || "").toLowerCase() === categoria)
+    : productos;
+
+  renderLista("", productosFiltrados);
+}
+
 
 // Borrar producto
 document.getElementById("btn-borrar-producto").addEventListener("click", () => {
