@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="estilos.css" />
     <link rel="apple-touch-icon" href="icono.png">
       <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#f7f7f7">
 
 </head>
 <!-- SDKs de Firebase -->
@@ -33,7 +33,7 @@
       <select id="selector-super">
         <option value="Mercadona">Mercadona</option>
         <option value="Eroski">Eroski</option>
-        <option value="Lidl">Chino</option>
+        <option value="Chino">Chino</option>
         <option value="Carrefour">Carrefour</option>
       </select>
       <input type="text" id="input-producto" placeholder="Escribe un producto..." />
@@ -43,31 +43,40 @@
     <section id="lista-productos"></section>
   </div>
 <!-- Modal edición -->
- <div id="modal-edicion" class="modal oculto">
-  <div class="modal-contenido">
-    <h2>Editar producto</h2>
-    <label>Nombre</label>
-    <input type="text" id="modal-nombre" />
+<div id="modal-edicion" class="modal oculto">
+  <div class="modal-contenido-opal-horizontal">
+    <div class="imagen-lateral">
+      <img id="modal-preview-imagen" src="https://placehold.co/150" />
+    </div>
 
-    <label>Precio (€)</label>
-    <input type="number" id="modal-precio" step="0.01" />
+    <div class="campos-laterales">
+      <h2>Editar producto</h2>
 
-    <label>Supermercado</label>
-    <select id="modal-super"></select>
+      <label>Nombre</label>
+      <input type="text" id="modal-nombre" />
 
-    <label>Categoría</label>
-    <input type="text" id="modal-categoria" placeholder="Ej. Frutas" />
+      <label>Precio (€)</label>
+      <input type="number" id="modal-precio" step="0.01" />
 
-    <label>Imagen</label>
-    <input type="file" id="modal-imagen" accept="image/*" capture="environment" />
+      <label>Supermercado</label>
+      <select id="modal-super"></select>
 
-    <div class="modal-botones">
-      <button id="btn-guardar-cambios">💾 Guardar</button>
-      <button id="btn-borrar-producto">🗑️ Borrar</button>
-      <button id="btn-cerrar-modal">❌ Cancelar</button>
+      <label>Categoría</label>
+      <input type="text" id="modal-categoria" placeholder="Ej. Frutas" />
+
+      <label>Imagen</label>
+      <input type="file" id="modal-imagen" accept="image/*" capture="environment" />
+
+      <div class="modal-botones">
+        <button id="btn-guardar-cambios">💾 Guardar</button>
+        <button id="btn-borrar-producto">🗑️ Borrar</button>
+        <button id="btn-cerrar-modal">❌ Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
+
+
 
 <script src="script.js"></script>
 

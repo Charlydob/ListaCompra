@@ -203,6 +203,7 @@ function abrirModalEdicion(prod) {
     .map(s => `<option ${s === prod.supermercado ? "selected" : ""}>${s}</option>`)
     .join("");
   document.getElementById("modal-categoria").value = prod.categoria || "";
+document.getElementById("modal-preview-imagen").src = prod.imagenURL || "https://placehold.co/150";
 
   document.getElementById("modal-edicion").classList.remove("oculto");
 }
@@ -220,6 +221,7 @@ document.getElementById("btn-guardar-cambios").addEventListener("click", () => {
   if (archivo) {
     subirImagenACloudinary(archivo).then(url => {
       productoActual.imagenURL = url;
+      document.getElementById("modal-preview-imagen").src = url;
       cerrarModal();
       guardarEnFirebase();
       renderLista();
