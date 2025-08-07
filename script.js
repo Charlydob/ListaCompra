@@ -2,6 +2,8 @@ const input = document.getElementById("input-producto");
 const selectSuper = document.getElementById("selector-super");
 const btnAgregar = document.getElementById("btn-agregar");
 const contenedorLista = document.getElementById("lista-productos");
+const rutaProductos = "productos/Charly"; 
+
 
 let productos = []; // Lista total
 let categorias = []; // [ "Frutas", "Quesos", etc. ]
@@ -14,12 +16,14 @@ function guardarEnFirebase() {
 function cargarDesdeFirebase() {
   db.ref(rutaProductos).once("value").then(snapshot => {
     const data = snapshot.val();
+    console.log("📦 Productos Firebase:", data); // 👈 debug
     if (data) {
-      productos = data;
+      productos = Array.isArray(data) ? data : Object.values(data);
       renderLista();
     }
   });
 }
+
 
 function cargarDesdeLocalStorage() {
   const data = localStorage.getItem("productos");
@@ -110,7 +114,7 @@ calcularTotalEstimado();
       });
 
       const imagen = document.createElement("img");
-      imagen.src = prod.imagenURL || "https://via.placeholder.com/50";
+imagen.src = prod.imagenURL || "https://placehold.co/50";
 
       const nombre = document.createElement("div");
       nombre.className = "nombre-producto";
@@ -247,3 +251,6 @@ function calcularTotalEstimado() {
   const texto = `Total estimado: ${total.toFixed(2)} €`;
   document.getElementById("total-estimado").textContent = texto;
 }
+// 🧠 CARGAR PRODUCTOS AL INICIO
+
+cargarDesdeFirebase();
