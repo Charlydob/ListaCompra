@@ -31,6 +31,8 @@ function cargarDesdeFirebase() {
     console.log("📦 Productos Firebase:", data); // 👈 debug
     if (data) {
       productos = Array.isArray(data) ? data : Object.values(data);
+    categorias = [...new Set(productos.map(p => p.categoria).filter(c => c))];
+      actualizarSelectorCategorias();
       renderLista();
     }
   });
@@ -41,6 +43,8 @@ function cargarDesdeLocalStorage() {
   const data = localStorage.getItem("productos");
   if (data) {
     productos = JSON.parse(data);
+    categorias = [...new Set(productos.map(p => p.categoria).filter(c => c))];
+    actualizarSelectorCategorias();
     renderLista();
   }
 }
