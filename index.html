@@ -6,9 +6,34 @@
   <title>Lista de la Compra</title>
   <link rel="stylesheet" href="estilos.css" />
 </head>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBDcOCQ0OrAaxr-yhhD5iVHqegwvhpjZaE",
+    authDomain: "listacompra-6d0b3.firebaseapp.com",
+    databaseURL: "https://listacompra-6d0b3-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "listacompra-6d0b3",
+    storageBucket: "listacompra-6d0b3.appspot.com",
+    messagingSenderId: "175496423309",
+    appId: "1:175496423309:web:509b2eb64961245536bfc4"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const rutaProductos = "productos/Charly"; // cambiar si quieres multiusuario
+</script>
+
 <body>
   <div id="app">
     <header>
+        <div id="total-estimado" style="font-weight: bold; font-size: 18px; margin-bottom: 10px;">
+  Total estimado: 0,00 €
+</div>
+
       <select id="selector-super">
         <option value="Mercadona">Mercadona</option>
         <option value="Eroski">Eroski</option>
@@ -21,7 +46,34 @@
 
     <section id="lista-productos"></section>
   </div>
+<!-- Modal edición -->
+ <div id="modal-edicion" class="modal oculto">
+  <div class="modal-contenido">
+    <h2>Editar producto</h2>
+    <label>Nombre</label>
+    <input type="text" id="modal-nombre" />
+
+    <label>Precio (€)</label>
+    <input type="number" id="modal-precio" step="0.01" />
+
+    <label>Supermercado</label>
+    <select id="modal-super"></select>
+
+    <label>Categoría</label>
+    <input type="text" id="modal-categoria" placeholder="Ej. Frutas" />
+
+    <label>Imagen</label>
+    <input type="file" id="modal-imagen" accept="image/*" capture="environment" />
+
+    <div class="modal-botones">
+      <button id="btn-guardar-cambios">💾 Guardar</button>
+      <button id="btn-borrar-producto">🗑️ Borrar</button>
+      <button id="btn-cerrar-modal">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
 
   <script src="script.js"></script>
+
 </body>
 </html>

@@ -5,6 +5,29 @@ const contenedorLista = document.getElementById("lista-productos");
 
 let productos = []; // Lista total
 let categorias = []; // [ "Frutas", "Quesos", etc. ]
+// FireBase configuracion
+function guardarEnFirebase() {
+  db.ref(rutaProductos).set(productos);
+  localStorage.setItem("productos", JSON.stringify(productos));
+}
+
+function cargarDesdeFirebase() {
+  db.ref(rutaProductos).once("value").then(snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      productos = data;
+      renderLista();
+    }
+  });
+}
+
+function cargarDesdeLocalStorage() {
+  const data = localStorage.getItem("productos");
+  if (data) {
+    productos = JSON.parse(data);
+    renderLista();
+  }
+}
 
 btnAgregar.addEventListener("click", () => {
   const nombre = input.value.trim().toLowerCase();
@@ -32,6 +55,7 @@ btnAgregar.addEventListener("click", () => {
       categoria: null // A implementar luego
     };
     productos.push(nuevoProducto);
+    guardarEnFirebase();
     renderLista();
   }
 
@@ -46,7 +70,7 @@ input.addEventListener("input", () => {
 
 function renderLista(filtro = "") {
   contenedorLista.innerHTML = "";
-
+calcularTotalEstimado();
   // Agrupar por supermercado
   const agrupados = {};
   for (let prod of productos) {
@@ -81,6 +105,7 @@ function renderLista(filtro = "") {
       checkbox.checked = prod.comprado;
       checkbox.addEventListener("change", () => {
         prod.comprado = checkbox.checked;
+        guardarEnFirebase();
         renderLista(filtro);
       });
 
@@ -118,6 +143,7 @@ contador.addEventListener("touchend", (e) => {
   } else {
     prod.cantidad = Math.max(1, prod.cantidad - 1);
   }
+guardarEnFirebase();
 
   startY = null;
   renderLista();
@@ -133,7 +159,7 @@ contador.addEventListener("touchend", (e) => {
       tarjeta.addEventListener("click", (e) => {
         if (e.target === checkbox) return; // no abrir editor si fue el check
         // abrir modal de edición (a implementar)
-        alert(`Editar "${prod.nombre}" (WIP)`);
+         abrirModalEdicion(prod);
       });
 
       grupo.appendChild(tarjeta);
@@ -141,4 +167,83 @@ contador.addEventListener("touchend", (e) => {
 
     contenedorLista.appendChild(grupo);
   }
+}
+// MODAL EDICION TARJETA
+let productoActual = null;
+
+// Abrir modal con datos
+function abrirModalEdicion(prod) {
+  productoActual = prod;
+
+  document.getElementById("modal-nombre").value = prod.nombre;
+  document.getElementById("modal-precio").value = prod.precio;
+  document.getElementById("modal-super").innerHTML = [...new Set(productos.map(p => p.supermercado))]
+    .map(s => `<option ${s === prod.supermercado ? "selected" : ""}>${s}</option>`)
+    .join("");
+  document.getElementById("modal-categoria").value = prod.categoria || "";
+
+  document.getElementById("modal-edicion").classList.remove("oculto");
+}
+
+// Guardar cambios
+document.getElementById("btn-guardar-cambios").addEventListener("click", () => {
+  if (!productoActual) return;
+
+  productoActual.nombre = document.getElementById("modal-nombre").value.trim();
+  productoActual.precio = parseFloat(document.getElementById("modal-precio").value) || 0;
+  productoActual.supermercado = document.getElementById("modal-super").value;
+  productoActual.categoria = document.getElementById("modal-categoria").value.trim();
+
+  const archivo = document.getElementById("modal-imagen").files[0];
+  if (archivo) {
+    subirImagenACloudinary(archivo).then(url => {
+      productoActual.imagenURL = url;
+      cerrarModal();
+      guardarEnFirebase();
+      renderLista();
+    });
+  } else {
+    cerrarModal();
+    guardarEnFirebase();
+    renderLista();
+  }
+});
+
+// Borrar producto
+document.getElementById("btn-borrar-producto").addEventListener("click", () => {
+  if (!productoActual) return;
+  productos = productos.filter(p => p.id !== productoActual.id);
+  cerrarModal();
+  guardarEnFirebase();
+  renderLista();
+});
+
+// Cancelar
+document.getElementById("btn-cerrar-modal").addEventListener("click", cerrarModal);
+
+function cerrarModal() {
+  document.getElementById("modal-edicion").classList.add("oculto");
+  productoActual = null;
+}
+function subirImagenACloudinary(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "publico");
+
+  return fetch("https://api.cloudinary.com/v1_1/dgdavibcx/image/upload", {
+    method: "POST",
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => data.secure_url);
+}
+
+// CALCULAR EL PRECIO ESTIMADO
+function calcularTotalEstimado() {
+  const total = productos
+    .filter(p => !p.comprado)
+    .reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
+
+  const texto = `Total estimado: ${total.toFixed(2)} €`;
+  document.getElementById("total-estimado").textContent = texto;
 }

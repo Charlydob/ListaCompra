@@ -91,3 +91,42 @@ header {
   background: #eee;
   border-radius: 8px;
 }
+/* Modal base */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-contenido {
+  background: white;
+  padding: 20px;
+  width: 90%;
+  border-radius: 10px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal input,
+.modal select {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.modal-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.oculto {
+  display: none !important;
+}
