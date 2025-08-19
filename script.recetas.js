@@ -38,9 +38,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const listaRecetas  = document.getElementById("lista-recetas");
   const btnNuevaReceta= document.getElementById("btn-nueva-receta");
   buscarRecetas && buscarRecetas.addEventListener("input", renderRecetas);
-  btnNuevaReceta  && btnNuevaReceta.addEventListener("click", ()=> abrirEditorReceta());
 
-  // === Añadir a la lista: NO sumes si existe; sólo desmarca ===
+  // === NUEVA RECETA ===
+  function crearRecetaEnBlanco(){
+    return {
+      id: "r_" + Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+      titulo: "Nueva receta",
+      porciones: 1,
+      imagenURL: "",
+      ingredientes: [],
+      pasos: []
+      // macros se calculan on-the-fly
+    };
+  }
+  function abrirNuevaReceta(){
+    recetaDetalle = crearRecetaEnBlanco();
+    abrirModalDetalleDesdeObjeto(recetaDetalle);
+  }
+  btnNuevaReceta && btnNuevaReceta.addEventListener("click", abrirNuevaReceta);
+
+  // === Añadir a la lista: si existe NO sumes; sólo desmarcar ===
   function añadirRecetaALaLista(receta){
     if(!receta || !Array.isArray(receta.ingredientes)) return;
 
@@ -57,12 +74,9 @@ document.addEventListener("DOMContentLoaded", () => {
       let prod = window.productos.find(p => norm(p.nombre) === key);
 
       if (prod){
-        // 👉 pediste: si ya está en la lista, NO sumar, sólo desmarcar
-        prod.comprado = false;
+        prod.comprado = false; // no aumentar cantidad
         continue;
       }
-
-      // Si no existe, crearlo con cantidad segura (por defecto 1 ud)
       const uniIng = (ing.unidad||"ud").toLowerCase();
       const cantidadNueva = uniIng==="ud" ? Number(ing.cantidad||1) : 1;
 
@@ -113,7 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const info = document.createElement("div");
       info.className = "receta-info";
-info.innerHTML = `<strong class="receta-titulo" title="${(r.titulo||'(sin título)')}">${r.titulo || "(sin título)"}</strong>`;
+      info.innerHTML = `<strong class="receta-titulo" title="${(r.titulo||'(sin título)')}">${r.titulo || "(sin título)"}</strong>`;
+
       const chips = document.createElement("div");
       chips.className = "receta-chips";
       const m = calcularMacrosReceta(r);
@@ -143,15 +158,55 @@ info.innerHTML = `<strong class="receta-titulo" title="${(r.titulo||'(sin títul
     });
   }
 
-  // ========== EDITOR RÁPIDO ==========
-  function abrirEditorReceta(receta=null){
-    const modalRE = document.getElementById("modal-receta-editor");
-    if (!modalRE) { abrirDetalleReceta(receta?.id); return; }
-    document.dispatchEvent(new CustomEvent("editar-receta", { detail: receta||null }));
+  // ========== MODAL DETALLE ==========
+  // Refs modal (se asume existe en el HTML con estos IDs)
+  let modal   = document.getElementById("modal-receta-detalle");
+  if (!modal) {
+    // fallback mínimo por si faltara (no rediseña, sólo garantiza IDs)
+    const html = `
+      <div id="modal-receta-detalle" class="modal oculto">
+        <div class="modal-contenido-opal-horizontal r-det">
+          <div class="r-det-col-izq">
+            <img id="r-det-img" src="https://placehold.co/180" />
+            <div class="r-det-macros">
+              <span class="r-chip" id="r-det-kcal">— kcal</span>
+              <span class="r-chip" id="r-det-carb">C: —</span>
+              <span class="r-chip" id="r-det-prot">P: —</span>
+              <span class="r-chip" id="r-det-fat">G: —</span>
+              <span class="r-chip" id="r-det-porc">x1</span>
+            </div>
+          </div>
+          <div class="r-det-col-der">
+            <h2 id="r-det-titulo" class="r-edit" contenteditable="true">Título</h2>
+            <div class="r-bloque">
+              <div class="r-bloque-header">
+                <h3>Ingredientes</h3>
+                <div class="r-bot-row">
+                  <button id="r-det-add-ing" class="btn-inline">+ Ingrediente</button>
+                </div>
+              </div>
+              <ul id="r-det-ings" class="r-ings"></ul>
+            </div>
+            <div class="r-bloque">
+              <div class="r-bloque-header">
+                <h3>Elaboración</h3>
+                <div class="r-bot-row">
+                  <button id="r-det-add-paso" class="btn-inline">+ Paso</button>
+                </div>
+              </div>
+              <ol id="r-det-pasos" class="r-pasos"></ol>
+            </div>
+            <div class="r-botones">
+              <button id="r-det-guardar">💾 Guardar</button>
+              <button id="r-det-cerrar">❌ Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    document.body.insertAdjacentHTML("beforeend", html);
+    modal = document.getElementById("modal-receta-detalle");
   }
 
-  // ---- Refs modal (ya existe en el HTML)
-  const modal   = document.getElementById("modal-receta-detalle");
   const $m      = (s)=> modal.querySelector(s);
   const imgEl   = $m("#r-det-img");
   const tEl     = $m("#r-det-titulo");
@@ -169,17 +224,22 @@ info.innerHTML = `<strong class="receta-titulo" title="${(r.titulo||'(sin títul
 
   let recetaDetalle = null;
 
-  // ---- Abrir modal por id
+  // Abre modal por ID existente
   window.abrirDetalleReceta = abrirDetalleReceta;
   function abrirDetalleReceta(id){
     const r = (window._recetas||[]).find(x=>x.id===id);
     if(!r) return;
-    recetaDetalle = JSON.parse(JSON.stringify(r));
+    abrirModalDetalleDesdeObjeto(r);
+  }
+
+  // Abre modal con OBJETO (sirve para "Nueva receta")
+  function abrirModalDetalleDesdeObjeto(obj){
+    recetaDetalle = JSON.parse(JSON.stringify(obj));
     renderDetalle();
     modal.classList.remove("oculto");
   }
 
-  // ---- Render modal (listeners DIRECTOS por fila)
+  // Render modal
   function renderDetalle(){
     if(!recetaDetalle) return;
 
@@ -271,9 +331,11 @@ info.innerHTML = `<strong class="receta-titulo" title="${(r.titulo||'(sin títul
     if(!recetaDetalle) return;
     recetaDetalle.ingredientes = (recetaDetalle.ingredientes||[]).filter(i=> (i.nombre||"").trim());
     recetaDetalle.pasos = (recetaDetalle.pasos||[]).filter(p=> (p||"").trim());
+
     const arr = window._recetas || [];
     const ix = arr.findIndex(x=>x.id===recetaDetalle.id);
     if (ix>=0) arr[ix] = recetaDetalle; else arr.push(recetaDetalle);
+
     if (db) db.ref(rutaRecetas).set(arr);
     localStorage.setItem("recetas", JSON.stringify(arr));
     renderRecetas(); cerrar();
@@ -284,6 +346,11 @@ info.innerHTML = `<strong class="receta-titulo" title="${(r.titulo||'(sin títul
   function cerrar(){ modal.classList.add("oculto"); recetaDetalle=null; }
 
   // ---- Imagen -> subir a Cloudinary
+  const subirGenericoACloudinary = async (file)=>{
+    const fd = new FormData(); fd.append("file", file); fd.append("upload_preset","publico");
+    const r = await fetch("https://api.cloudinary.com/v1_1/dgdavibcx/image/upload",{method:"POST", body:fd});
+    const d = await r.json(); return d.secure_url;
+  };
   imgEl && imgEl.addEventListener("click", async (e)=>{
     e.stopPropagation();
     const inp = document.createElement("input");
@@ -297,11 +364,6 @@ info.innerHTML = `<strong class="receta-titulo" title="${(r.titulo||'(sin títul
     };
     inp.click();
   });
-  async function subirGenericoACloudinary(file){
-    const fd = new FormData(); fd.append("file", file); fd.append("upload_preset","publico");
-    const r = await fetch("https://api.cloudinary.com/v1_1/dgdavibcx/image/upload",{method:"POST", body:fd});
-    const d = await r.json(); return d.secure_url;
-  }
 
   // ========== Utiles ==========
   function calcularMacrosReceta(r){
