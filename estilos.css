@@ -608,6 +608,9 @@ select:focus, input:focus{
     position:sticky; bottom:0; background:transparent; padding-top:4px;
     justify-content:flex-end;
   }
+  #r-det-guardar, #r-det-cerrar {
+    background-color: rgba(255, 255, 255, 0.237) !important;
+  }
 }
 
 /* =========================
@@ -675,4 +678,62 @@ select:focus, input:focus{
 .receta-chips{
   position:absolute; left:calc(12px + 125px + 10px); right:12px; bottom:12px;
   display:flex; gap:6px; flex-wrap:wrap;
+}
+/* =========================
+   RECETAS – FIX MÓVIL
+   ========================= */
+
+/* más separación entre tarjetas */
+#lista-recetas{ gap:14px !important; }
+
+/* tarjeta: sin recorte y con altura mínima común */
+.receta-card{
+  align-items:flex-start;
+  overflow:visible !important;    /* no ocultar botones */
+  min-height:120px;               /* misma base; crece si el título es largo */
+  grid-template-columns:64px minmax(0,1fr) !important;
+  grid-template-areas:
+    "img title"
+    "img chips"
+    "img actions" !important;     /* acciones en su propia fila */
+}
+
+/* imagen estable */
+.receta-card img{ width:64px; height:64px; object-fit:cover; border-radius:10px; border:1px solid var(--stroke) }
+
+/* título: multilínea, sin elipsis ni clamp */
+.receta-info{ grid-area:title; min-width:0; padding-right:0 !important; }
+.receta-info .receta-titulo,
+.receta-info strong{
+  display:block !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  -webkit-line-clamp:unset !important;
+  margin:0 0 6px 0;
+  line-height:1.2;
+  font-weight:800;
+}
+
+/* chips debajo del título */
+.receta-chips{ grid-area:chips; display:flex; gap:6px; flex-wrap:wrap }
+
+/* botones: fila propia; no afectan al ancho del título */
+.receta-acciones{
+  grid-area:actions;
+  display:flex; gap:6px; flex-wrap:wrap;
+  justify-content:flex-start;
+  position:static !important;     /* deja de ser absoluto en móvil */
+}
+
+/* versión >=600px: layout más ancho, botones a la derecha */
+@media (min-width:600px){
+  .receta-card{
+    grid-template-columns:80px minmax(0,1fr) auto !important;
+    grid-template-areas:
+      "img title actions"
+      "img chips actions" !important;
+  }
+  .receta-card img{ width:80px; height:80px }
+  .receta-acciones{ justify-content:flex-end }
 }
