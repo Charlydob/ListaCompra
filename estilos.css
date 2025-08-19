@@ -233,3 +233,384 @@ select:focus, input:focus{
 
 /* Opcional: si en JS añades contenedor de cantidad con clase */
 .controles-cantidad .btn-qty{background:var(--glass)}
+/* ====== Recetas (estilos nuevos, no alteran lo existente) ====== */
+.tarjeta-receta{
+  display:flex; align-items:center; gap:12px; position:relative;
+  padding:12px; border-radius:16px;
+  background: linear-gradient(140deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  border:1px solid var(--stroke);
+  box-shadow:0 14px 28px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.02) inset;
+  backdrop-filter: blur(8px);
+}
+.tarjeta-receta img{
+  width:54px; height:54px; object-fit:cover; border-radius:12px;
+  border:1px solid rgba(255,255,255,.08);
+}
+.titulo-receta{flex:1; font-weight:600}
+.macros{display:flex; gap:6px; flex-wrap:wrap}
+.mchip{
+  font-size:12px; padding:2px 8px; border-radius:999px;
+  border:1px solid var(--stroke); color:#b7c1d6;
+}
+.btn-inline{
+  min-width:36px; padding:6px 10px; border-radius:12px; border:1px solid var(--stroke);
+  background:var(--glass); color:var(--txt); cursor:pointer;
+}
+.ing-row, .paso-row{display:flex; gap:8px}
+.ing-row input[type="text"]{flex:1}
+.ing-row input[type="number"]{width:96px}
+.ing-row select{width:84px}
+/* --- Tabs suaves (no pisa estilos previos) --- */
+.tab-soft{
+  flex:1; padding:10px; border-radius:10px; border:1px solid var(--stroke);
+  background: rgba(255,255,255,.06); color: var(--txt); margin-bottom: 12px;
+}
+.tab-soft.active{ outline:2px solid var(--accent); }
+
+/* --- Tarjeta receta reutiliza tu .lista/.card si ya existe; añadimos chips --- */
+.receta-card{
+  display:flex; gap:10px; align-items:center; padding:12px; border-radius:14px;
+  border:1px solid var(--stroke); background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+}
+.receta-card img{ width:56px; height:56px; object-fit:cover; border-radius:10px; border:1px solid var(--stroke) }
+.receta-info{ flex:1 }
+.receta-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+.receta-chip{ font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--stroke); color:#b7c1d6; }
+/* ===== Detalle Receta (nuevo) ===== */
+.r-det{display:grid; grid-template-columns: 200px 1fr; gap:16px; max-width:900px}
+.r-det-col-izq{display:flex; flex-direction:column; gap:10px; align-items:center; padding:10px}
+.r-det-col-izq img{width:180px; height:180px; object-fit:cover; border-radius:14px; border:1px solid var(--stroke)}
+.r-det-macros{display:flex; gap:6px; flex-wrap:wrap; justify-content:center}
+.r-chip{font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--stroke); color:#b7c1d6}
+
+.r-det-col-der{display:flex; flex-direction:column; gap:12px; padding:12px}
+.r-edit[contenteditable="true"]{outline:none; border-bottom:1px dashed transparent}
+.r-edit.r-editing{border-bottom-color: var(--stroke); background: rgba(255,255,255,.04); border-radius:6px; padding:2px 4px}
+
+.r-bloque{display:flex; flex-direction:column; gap:8px}
+.r-bloque-header{display:flex; align-items:center; justify-content:space-between}
+.r-bot-row{display:flex; gap:8px}
+
+.r-ings{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+.r-ing-item{display:grid; grid-template-columns: 1fr 90px 70px 32px; gap:8px; align-items:center}
+.r-ing-nom,.r-ing-cant,.r-ing-uni{border:1px dashed transparent; border-radius:6px; padding:4px 6px}
+.r-ing-nom.r-editing,.r-ing-cant.r-editing,.r-ing-uni.r-editing{border-color: var(--stroke); background: rgba(255,255,255,.04)}
+.r-ing-x{border:1px solid var(--stroke); background:var(--card); color:var(--txt); border-radius:8px; padding:6px}
+
+.r-pasos{margin:0; padding-left:22px; display:flex; flex-direction:column; gap:6px}
+.r-paso{display:grid; grid-template-columns: 1fr 32px; gap:8px; align-items:center}
+.r-paso .r-paso-txt{border:1px dashed transparent; border-radius:6px; padding:4px 6px}
+.r-paso .r-paso-txt.r-editing{border-color: var(--stroke); background: rgba(255,255,255,.04)}
+
+.r-botones{display:flex; gap:8px; justify-content:flex-end}
+/* ==== Recetas: barra y botones ==== */
+
+/* Input buscar */
+#buscar-recetas{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--stroke);
+  background:#0f1320;
+  color:var(--txt);
+  border-radius:10px;
+  outline: none;
+}
+#buscar-recetas::placeholder{ color: var(--muted); }
+
+/* Botón "Nueva" */
+#btn-nueva-receta{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+  color: var(--txt);
+  cursor:pointer;
+  transition: transform .06s ease, background .2s ease, box-shadow .2s ease;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+}
+#btn-nueva-receta:hover{ background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04)); }
+#btn-nueva-receta:active{ transform: translateY(1px) scale(.99); }
+#btn-nueva-receta:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+/* Lista de recetas: botones de cada tarjeta */
+#lista-recetas .receta-card button{
+  border:1px solid var(--stroke);
+  background: var(--card);
+  color: var(--txt);
+  padding:8px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  transition: transform .06s ease, background .2s ease;
+}
+#lista-recetas .receta-card button:hover{ background: rgba(255,255,255,.10); }
+#lista-recetas .receta-card button:active{ transform: translateY(1px) scale(.99); }
+#lista-recetas .receta-card button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+/* Opcional: refuerzo de layout de la toolbar (no pisa estilos existentes) */
+#vista-recetas .recetas-toolbar{
+  display:flex; gap:8px; align-items:center;
+}
+/* Checkbox en ingredientes del detalle */
+.r-ing-item{display:grid; grid-template-columns: 26px 1fr 90px 70px 32px; gap:8px; align-items:center}
+.r-ing-check{appearance:none; width:18px; height:18px; border:1px solid var(--stroke); border-radius:4px; background:var(--card); cursor:pointer; display:inline-block; position:relative}
+.r-ing-check:checked::after{content:""; position:absolute; inset:3px; background:var(--accent); border-radius:2px}
+#r-det-a-lista{
+  border:1px solid var(--stroke); border-radius:10px; padding:8px 10px;
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  color:var(--txt); cursor:pointer;
+}
+#r-det-a-lista:disabled{opacity:.6; cursor:default}
+/* Ingredientes con checkbox clicable */
+.r-ing-item{display:grid; grid-template-columns: 26px 1fr 90px 70px 32px; gap:8px; align-items:center}
+.r-ing-check{appearance:none; width:18px; height:18px; border:1px solid var(--stroke); border-radius:4px; background:var(--card); cursor:pointer; display:inline-block; position:relative}
+.r-ing-check:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.r-ing-check:checked::after{content:""; position:absolute; inset:3px; background:var(--accent); border-radius:2px}
+
+/* Pasos: mantener numeración del <ol> */
+.r-pasos{margin:0; padding-left:22px; list-style: decimal; display:block}
+.r-paso{display:list-item}
+.r-paso-line{display:flex; gap:8px; align-items:flex-start}
+.r-paso .r-paso-txt{border:1px dashed transparent; border-radius:6px; padding:4px 6px}
+.r-paso .r-paso-txt.r-editing{border-color: var(--stroke); background: rgba(255,255,255,.04)}
+/* ======= Receta: tarjeta móvil ======= */
+.receta-card{
+  display:grid;
+  grid-template-columns:64px 1fr;
+  grid-template-areas:
+    "img title"
+    "img chips"
+    "img actions";
+  gap:10px;
+  align-items:center;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+}
+.receta-card img{ grid-area:img; width:64px; height:64px; object-fit:cover; border-radius:10px; border:1px solid var(--stroke) }
+.receta-info{ grid-area:title }
+.receta-chips{ grid-area:chips; display:flex; gap:6px; flex-wrap:wrap; }
+.receta-acciones{ grid-area:actions; display:flex; gap:6px; flex-wrap:wrap; }
+.receta-acciones button{
+  border:1px solid var(--stroke); background:var(--card); color:var(--txt);
+  padding:8px 10px; border-radius:10px; cursor:pointer;
+}
+@media (min-width:600px){
+  .receta-card{
+    grid-template-columns:80px 1fr auto;
+    grid-template-areas:
+      "img title actions"
+      "img chips actions";
+  }
+  .receta-card img{ width:80px; height:80px; }
+}
+
+/* ======= Modal detalle: checkbox ingredientes (tap fiable) ======= */
+.r-ing-item{display:grid; grid-template-columns:26px 1fr 90px 70px 32px; gap:8px; align-items:center}
+.r-ing-check-wrap{ width:18px; height:18px; display:flex; align-items:center; justify-content:center }
+.r-ing-check{
+  -webkit-appearance:none; appearance:none; width:18px; height:18px;
+  border:1px solid var(--stroke); border-radius:4px; background:var(--card);
+  cursor:pointer; position:relative; pointer-events:auto;
+}
+.r-ing-check:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+.r-ing-check:checked::after{ content:""; position:absolute; inset:3px; background:var(--accent); border-radius:2px }
+
+/* Pasos visibles con numeración nativa */
+.r-pasos{ margin:0; padding-left:22px; list-style:decimal; display:block }
+.r-paso{ display:list-item }
+.r-paso-line{ display:flex; gap:8px; align-items:flex-start }
+.r-paso .r-paso-txt{ border:1px dashed transparent; border-radius:6px; padding:4px 6px }
+.r-paso .r-paso-txt.r-editing{ border-color:var(--stroke); background:rgba(255,255,255,.04) }
+/* Fix layout ingredientes: incluye columna para checkbox */
+.r-ing-item{
+  grid-template-columns: 26px 1fr 90px 70px 32px !important;
+}
+
+/* Checkbox táctil fiable en iOS/Android */
+.r-ing-check-wrap{ width:18px; height:18px; display:flex; align-items:center; justify-content:center }
+.r-ing-check{
+  -webkit-appearance:none; appearance:none; width:18px; height:18px;
+  border:1px solid var(--stroke); border-radius:4px; background:var(--glass);
+  cursor:pointer; position:relative; pointer-events:auto;
+}
+.r-ing-check:focus-visible{ outline:2px solid var(--opal-cyan); outline-offset:2px }
+.r-ing-check:checked::after{ content:""; position:absolute; inset:3px; background:var(--opal-cyan); border-radius:2px }
+/* =========================
+   RECETA – ESTILOS PENDIENTES
+   ========================= */
+
+/* Pie del modal (guardar/cerrar) */
+#modal-receta-detalle .r-botones{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;   /* a la derecha */
+  margin-top:8px;
+}
+#modal-receta-detalle .r-botones button{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid var(--stroke);
+  background:var(--glass);
+  color:var(--txt);
+  cursor:pointer;
+  transition:transform .06s ease, background .2s ease;
+}
+#modal-receta-detalle .r-botones button:hover{ background:var(--glass-2); }
+#modal-receta-detalle .r-botones button:active{ transform:translateY(1px) scale(.99); }
+#modal-receta-detalle .r-botones button:focus-visible{ outline:2px solid var(--opal-cyan); outline-offset:2px; }
+
+/* Botón eliminar (✕) pegado a la derecha en INGREDIENTES */
+#modal-receta-detalle .r-ing-item .r-ing-x{
+  justify-self:end;           /* grid: al borde derecho */
+  width:32px; height:32px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--stroke);
+  border-radius:8px;
+  background:var(--glass);
+  color:var(--txt);
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#modal-receta-detalle .r-ing-item .r-ing-x:hover{ background:var(--glass-2); }
+#modal-receta-detalle .r-ing-item .r-ing-x:focus-visible{ outline:2px solid var(--opal-cyan); outline-offset:2px; }
+
+/* Botón eliminar (✕) pegado a la derecha en PASOS */
+#modal-receta-detalle .r-paso-line .r-ing-x{
+  margin-left:auto;           /* flex: empuja a la derecha */
+  width:32px; height:32px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--stroke);
+  border-radius:8px;
+  background:var(--glass);
+  color:var(--txt);
+  cursor:pointer;
+  margin-top: 4px;
+}
+#modal-receta-detalle .r-paso-line .r-ing-x:hover{ background:var(--glass-2); }
+#modal-receta-detalle .r-paso-line .r-ing-x:focus-visible{ outline:2px solid var(--opal-cyan); outline-offset:2px; }
+/* =========================
+   RECETA – INFO compacta (título sin salto + elipsis)
+   ========================= */
+
+/* Permite que el título pueda encoger y aplicar elipsis en grid */
+.receta-card{
+  grid-template-columns: 64px minmax(0,1fr) !important;
+}
+@media (min-width:600px){
+  .receta-card{
+    grid-template-columns: 80px minmax(0,1fr) auto !important;
+  }
+}
+
+/* La columna de info puede reducirse y no romper el layout */
+.receta-info{
+  min-width: 0;               /* clave para elipsis en grids */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Título en una sola línea, con puntos suspensivos si se pasa */
+.receta-info .receta-titulo{
+  display:block;
+  width:100%;
+  font-weight:800;
+  line-height:1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* (Opcional) separa chips del título en móviles */
+.receta-chips{ margin-top: -2px; }
+/* =========================
+   RECETA – INFO bajo título en 2 columnas
+   y título sin recorte (multilínea)
+   ========================= */
+
+/* La tarjeta se estira en vertical sin romper layout */
+.receta-card{ align-items:flex-start }
+
+/* Título: que se lea entero (sin elipsis) */
+.receta-info{ min-width:0 }
+.receta-info .receta-titulo,
+.receta-info strong{
+  display:block;
+  font-weight:800;
+  line-height:1.2;
+  white-space:normal;          /* permite varias líneas */
+  overflow:visible;
+  text-overflow:unset;
+  margin-bottom:6px;           /* separa del bloque info */
+}
+
+/* Chips bajo el título en 2 columnas alineadas */
+.receta-chips{
+  grid-area:chips;
+  display:grid !important;
+  grid-template-columns:1fr 1fr;
+  gap:6px 8px;
+  align-items:center;
+}
+.receta-chip{ text-align:center }
+
+/* (Opc) acciones quedan bajo chips; no cambia tu HTML */
+.receta-acciones{ grid-area:actions }
+
+/* =========================
+   MODAL RECETA – Móvil vertical sin scroll horizontal
+   ========================= */
+@media (max-width: 520px){
+  .modal-contenido-opal-horizontal{
+    max-width:100%;
+    border-radius:18px;
+    overflow-x:hidden;
+  }
+  /* Una sola columna; nada se sale por los lados */
+  #modal-receta-detalle .r-det{
+    grid-template-columns:1fr !important;
+    gap:12px;
+    padding:12px;
+  }
+  #modal-receta-detalle .r-det-col-izq,
+  #modal-receta-detalle .r-det-col-der{
+    min-width:0;
+  }
+  /* Imagen responsive cuadrada y contenida */
+  #modal-receta-detalle img#r-det-img{
+    width:100%;
+    max-width:420px;
+    height:auto;
+    aspect-ratio:1/1;
+    object-fit:cover;
+  }
+
+  /* Ingredientes: columnas ajustadas y sin desbordes */
+  #modal-receta-detalle .r-ing-item{
+    grid-template-columns:26px minmax(0,1fr) 80px 60px 32px !important;
+    align-items:center;
+  }
+  #modal-receta-detalle .r-ing-check-wrap{ z-index:1 } /* tap fiable */
+  #modal-receta-detalle .r-ing-nom,
+  #modal-receta-detalle .r-ing-cant,
+  #modal-receta-detalle .r-ing-uni{
+    min-width:0;
+    word-break:break-word;
+  }
+  /* Pasos: margen y ajuste de texto */
+  #modal-receta-detalle .r-pasos{ padding-left:18px }
+  #modal-receta-detalle .r-paso .r-paso-txt{
+    min-width:0; word-break:break-word;
+  }
+  /* Botonera del modal siempre a la derecha y visible */
+  #modal-receta-detalle .r-botones{
+    position:sticky; bottom:0; background:transparent; padding-top:4px;
+    justify-content:flex-end;
+  }
+}
+
+/* =========================
+   (Compat) si no usaste .receta-titulo en el HTML
+   el selector .receta-info strong ya se encarga.
+   ========================= */

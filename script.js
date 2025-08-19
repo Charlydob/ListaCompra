@@ -539,3 +539,504 @@ function init() {
   renderLista(); // por si no hay datos aún
 }
 init();
+// ================== RECETAS (ADITIVO, SIN ROMPER NADA) ==================
+const rutaRecetas = "recetas/Charly";
+let recetas = JSON.parse(localStorage.getItem("recetas") || "[]");
+
+// Carga inicial de recetas (no bloquea tu init)
+(function cargarRecetas(){
+  try{
+    firebase.database().ref(rutaRecetas).once("value").then(s=>{
+      const v = s.val();
+      if(Array.isArray(v)) recetas = v;
+      else if (v && typeof v === "object") recetas = Object.values(v);
+      localStorage.setItem("recetas", JSON.stringify(recetas));
+      // no renderizo nada aquí (las recetas van en modal)
+    });
+  }catch(e){ /* offline? usamos local */ }
+})();
+
+const guardarRecetasDebounced = (function(){
+  let t=null; 
+  return function(){ clearTimeout(t); t=setTimeout(()=>{
+    firebase.database().ref(rutaRecetas).set(recetas);
+    localStorage.setItem("recetas", JSON.stringify(recetas));
+  },300); };
+})();
+
+const uidR = ()=> Math.random().toString(36).slice(2,10);
+
+// --------- UI refs (botón abrir/cerrar modal recetas)
+const btnAbrirRecetas = document.getElementById("btn-recetas");
+const modalRecetas = document.getElementById("modal-recetas");
+const rBuscar = document.getElementById("r-buscar");
+const rNueva = document.getElementById("r-nueva");
+const rCerrar = document.getElementById("r-cerrar");
+const rLista = document.getElementById("r-lista");
+
+// Editor
+const modalRE = document.getElementById("modal-receta-editor");
+const reTitulo = document.getElementById("re-titulo");
+const rePorciones = document.getElementById("re-porciones");
+const reImagen = document.getElementById("re-imagen");
+const reTexto = document.getElementById("re-texto");
+const reAnalizar = document.getElementById("re-analizar");
+const reIngs = document.getElementById("re-ings");
+const reAddIng = document.getElementById("re-add-ing");
+const rePasos = document.getElementById("re-pasos");
+const reAddPaso = document.getElementById("re-add-paso");
+const reGuardar = document.getElementById("re-guardar");
+const reCerrar = document.getElementById("re-cerrar");
+const reALista = document.getElementById("re-a-lista");
+
+let recetaDraft = null;
+
+// --------- Abrir/ cerrar modales
+if(btnAbrirRecetas){
+  btnAbrirRecetas.addEventListener("click", ()=>{
+    renderListaRecetas();
+    modalRecetas.classList.remove("oculto");
+  });
+}
+if(rCerrar) rCerrar.addEventListener("click", ()=> modalRecetas.classList.add("oculto"));
+if(modalRecetas) modalRecetas.addEventListener("click", (e)=>{ if(e.target===modalRecetas) modalRecetas.classList.add("oculto"); });
+if(reCerrar) reCerrar.addEventListener("click", ()=> modalRE.classList.add("oculto"));
+if(modalRE) modalRE.addEventListener("click", (e)=>{ if(e.target===modalRE) modalRE.classList.add("oculto"); });
+
+if(rBuscar) rBuscar.addEventListener("input", renderListaRecetas);
+if(rNueva) rNueva.addEventListener("click", ()=> abrirEditorReceta());
+
+// --------- Render lista de recetas (en modal)
+function renderListaRecetas(){
+  if(!rLista) return;
+  rLista.innerHTML = "";
+  const q = normalize(rBuscar?.value || "");
+  const lista = recetas
+    .filter(r => !q || normalize(r.titulo||"").includes(q))
+    .sort((a,b)=> (a.titulo||"").localeCompare(b.titulo||""));
+  for(const r of lista){
+    const card = document.createElement("div");
+    card.className = "tarjeta-receta";
+    const img = document.createElement("img");
+    img.src = r.imagenURL || "https://placehold.co/80x80?text=%20";
+    const t = document.createElement("div");
+    t.className = "titulo-receta";
+    t.textContent = r.titulo || "(sin título)";
+
+    const mac = calcularMacrosReceta(r);
+    const chips = document.createElement("div");
+    chips.className = "macros";
+    const c1 = document.createElement("span"); c1.className="mchip"; c1.textContent = isFinite(mac.kcal) ? `${Math.round(mac.kcal)} kcal` : "— kcal";
+    const c2 = document.createElement("span"); c2.className="mchip"; c2.textContent = isFinite(mac.carb) ? `C:${Math.round(mac.carb)}` : "C: —";
+    const c3 = document.createElement("span"); c3.className="mchip"; c3.textContent = isFinite(mac.prot) ? `P:${Math.round(mac.prot)}` : "P: —";
+    chips.append(c1,c2,c3);
+
+    const btnEdit = document.createElement("button"); btnEdit.className="btn-inline"; btnEdit.textContent="Editar";
+    btnEdit.onclick = ()=> abrirEditorReceta(r);
+    const btnAdd = document.createElement("button"); btnAdd.className="btn-inline"; btnAdd.textContent="Añadir a lista";
+    btnAdd.onclick = ()=> { añadirRecetaALaLista(r); alert("Ingredientes añadidos a la lista"); };
+    const btnDel = document.createElement("button"); btnDel.className="btn-inline"; btnDel.textContent="Borrar";
+    btnDel.onclick = ()=>{ if(confirm("¿Borrar receta?")){ recetas = recetas.filter(x=>x.id!==r.id); guardarRecetasDebounced(); renderListaRecetas(); } };
+
+    card.append(img,t,chips,btnEdit,btnAdd,btnDel);
+    rLista.append(card);
+  }
+}
+
+// --------- Editor de receta
+function abrirEditorReceta(receta=null){
+  recetaDraft = receta ? JSON.parse(JSON.stringify(receta)) : { id: uidR(), titulo:"", porciones:4, imagenURL:"", categorias:[], ingredientes:[], pasos:[] };
+  reTitulo.value = recetaDraft.titulo || "";
+  rePorciones.value = recetaDraft.porciones || 4;
+  reTexto.value = "";
+  reIngs.innerHTML = "";
+  rePasos.innerHTML = "";
+  if(recetaDraft.ingredientes?.length){ recetaDraft.ingredientes.forEach(addIngRow); } else { addIngRow(); }
+  if(recetaDraft.pasos?.length){ recetaDraft.pasos.forEach(addPasoRow); } else { addPasoRow(""); }
+  modalRE.classList.remove("oculto");
+}
+
+reAddIng?.addEventListener("click", ()=> addIngRow());
+reAddPaso?.addEventListener("click", ()=> addPasoRow(""));
+
+function addIngRow(ing={nombre:"", cantidad:0, unidad:"ud"}){
+  const row = document.createElement("div");
+  row.className = "ing-row";
+  row.innerHTML = `
+    <input type="text" class="ing-nom" placeholder="Ingrediente" value="${ing.nombre||""}">
+    <input type="number" step="0.01" min="0" class="ing-cant" placeholder="Cant." value="${ing.cantidad||0}">
+    <select class="ing-uni">
+      <option value="ud"${ing.unidad==="ud"?" selected":""}>ud</option>
+      <option value="g"${ing.unidad==="g"?" selected":""}>g</option>
+      <option value="ml"${ing.unidad==="ml"?" selected":""}>ml</option>
+    </select>
+    <button class="btn-inline ing-del">Borrar</button>
+  `;
+  row.querySelector(".ing-del").onclick = ()=> row.remove();
+  reIngs.append(row);
+}
+function readIngs(){
+  return [...reIngs.querySelectorAll(".ing-row")].map(r=>({
+    nombre: r.querySelector(".ing-nom").value.trim(),
+    cantidad: +r.querySelector(".ing-cant").value || 0,
+    unidad: r.querySelector(".ing-uni").value,
+    productoId: null
+  })).filter(x=>x.nombre);
+}
+
+function addPasoRow(texto=""){
+  const row = document.createElement("div");
+  row.className="paso-row";
+  row.innerHTML = `<input type="text" class="paso-txt" placeholder="Paso" value="${texto}">
+  <button class="btn-inline paso-del">Borrar</button>`;
+  row.querySelector(".paso-del").onclick = ()=> row.remove();
+  rePasos.append(row);
+}
+function readPasos(){
+  return [...rePasos.querySelectorAll(".paso-txt")].map(i=>i.value.trim()).filter(Boolean);
+}
+
+reAnalizar?.addEventListener("click", ()=>{
+  const parsed = parsearRecetaDesdeTexto(reTexto.value||"");
+  if(parsed.titulo) reTitulo.value = parsed.titulo;
+  if(parsed.porciones) rePorciones.value = parsed.porciones;
+  if(parsed.ingredientes?.length){ reIngs.innerHTML=""; parsed.ingredientes.forEach(addIngRow); }
+  if(parsed.pasos?.length){ rePasos.innerHTML=""; parsed.pasos.forEach(addPasoRow); }
+});
+
+reGuardar?.addEventListener("click", ()=>{
+  const r = {
+    id: recetaDraft?.id || uidR(),
+    titulo: reTitulo.value.trim() || "(sin título)",
+    porciones: +rePorciones.value || 1,
+    imagenURL: recetaDraft?.imagenURL || "",
+    categorias: [],
+    ingredientes: readIngs(),
+    pasos: readPasos()
+  };
+  const ix = recetas.findIndex(x=>x.id===r.id);
+  if(ix>=0) recetas[ix]=r; else recetas.push(r);
+  guardarRecetasDebounced();
+  renderListaRecetas();
+  modalRE.classList.add("oculto");
+});
+
+reALista?.addEventListener("click", ()=>{
+  const r = {
+    id: recetaDraft?.id || uidR(),
+    titulo: reTitulo.value.trim() || "(sin título)",
+    porciones: +rePorciones.value || 1,
+    imagenURL: recetaDraft?.imagenURL || "",
+    categorias: [],
+    ingredientes: readIngs(),
+    pasos: readPasos()
+  };
+  añadirRecetaALaLista(r);
+  alert("Ingredientes añadidos a la lista");
+});
+
+reImagen?.addEventListener("change", async ()=>{
+  const f = reImagen.files?.[0];
+  if(!f) return;
+  try{
+    const url = await subirImagenACloudinary(f);
+    recetaDraft = recetaDraft || {};
+    recetaDraft.imagenURL = url;
+  }catch(e){ /* no romper */ }
+});
+
+// --------- Parser receta desde texto
+function parsearRecetaDesdeTexto(s){
+  const out = {titulo:"", porciones:0, ingredientes:[], pasos:[]};
+  s = (s||"").replace(/\r/g,"");
+  const mT = s.match(/t[íi]tulo\s*:\s*(.+)/i); if(mT) out.titulo = mT[1].trim();
+  const mP = s.match(/porciones?\s*:\s*([0-9]+)/i); if(mP) out.porciones = +mP[1];
+
+  const mI = s.match(/ingredientes\s*:\s*([\s\S]*?)(?:\n\s*(pasos?|elaboraci[óo]n)\s*:|$)/i);
+  if(mI){
+    const lines = mI[1].split("\n").map(l=>l.trim()).filter(Boolean);
+    for(const l of lines){
+      const m = l.match(/^-+\s*([\d.,]+)?\s*(g|ml|ud)?\s*(.+)$/i);
+      if(m){
+        const cant = m[1] ? parseFloat(m[1].replace(",",".")) : 0;
+        const uni  = m[2] ? m[2].toLowerCase() : "ud";
+        const nom  = (m[3]||"").replace(/\s*\(.*?\)\s*/g,"").trim();
+        out.ingredientes.push({nombre:nom, cantidad:cant, unidad:uni, productoId:null});
+      }else{
+        out.ingredientes.push({nombre:l.replace(/^-\s*/,""), cantidad:0, unidad:"ud", productoId:null});
+      }
+    }
+  }
+  const mS = s.match(/(?:\n|^)(pasos?|elaboraci[óo]n)\s*:\s*([\s\S]*)$/i);
+  if(mS){
+    const lines = mS[2].split("\n").map(x=>x.trim()).filter(Boolean);
+    for(const l of lines){
+      const t = l.replace(/^\d+\)?[.)]?\s*/,"").trim();
+      if(t) out.pasos.push(t);
+    }
+  }
+  return out;
+}
+
+// --------- Añadir a la lista (usa tus estructuras y helpers existentes)
+function añadirRecetaALaLista(receta){
+  if(!Array.isArray(receta?.ingredientes)) return;
+  for(const ing of receta.ingredientes){
+    const n = normalize(ing.nombre||"");
+    let prod = productos.find(p=> normalize(p.nombre)===n );
+    if(!prod){
+      prod = {
+        id: Date.now().toString(),
+        nombre: ing.nombre || "Ingrediente",
+        supermercado: "Otros",
+        cantidad: 0,
+        precio: 0,
+        comprado: false,
+        imagenURL: "",
+        categoria: null
+      };
+      productos.push(prod);
+    }
+    // Suma simple (sin romper unidades: priorizamos 'ud')
+    const cant = Number(ing.cantidad||1);
+    prod.cantidad = Math.max(1, (Number(prod.cantidad||0)) + (cant || 1));
+  }
+  // Re-render con tus funciones
+  if (typeof renderLista === "function") renderLista();
+  if (typeof calcularTotalEstimado === "function") calcularTotalEstimado();
+  if (typeof persistir === "function") persistir(true);
+}
+
+// --------- Cálculo de macros (opcional, usa producto.nutricion si existiese)
+function calcularMacrosReceta(r){
+  let kcal=0, carb=0, prot=0, fat=0;
+  if(!Array.isArray(r?.ingredientes)) return {kcal:NaN,carb:NaN,prot:NaN,fat:NaN};
+  for(const ing of r.ingredientes){
+    const n = normalize(ing.nombre||"");
+    const prod = productos.find(p=> normalize(p.nombre)===n );
+    if(!prod || !prod.nutricion) continue;
+    let factor = 0;
+    if(ing.unidad==="g"||ing.unidad==="ml") factor = (ing.cantidad||0)/100;
+    else if (prod.gramosPorUnidad) factor = (prod.gramosPorUnidad*(ing.cantidad||1))/100;
+    kcal += (prod.nutricion.kcal_100||0)*factor;
+    carb += (prod.nutricion.carb_100||0)*factor;
+    prot += (prod.nutricion.prot_100||0)*factor;
+    fat  += (prod.nutricion.fat_100||0)*factor;
+  }
+  return {kcal,carb,prot,fat};
+}
+// ========= PESTAÑA RECETAS (solo añade; no tocamos tu lógica previa) =========
+
+// Estado local (si no existiese ya)
+window._recetas = window._recetas || JSON.parse(localStorage.getItem("recetas") || "[]");
+const _rutaRecetas = "recetas/Charly";
+
+// Carga inicial (idempotente)
+(function _cargarRecetasUnaVez(){
+  try{
+    firebase.database().ref(_rutaRecetas).once("value").then(s=>{
+      const v = s.val();
+      if (Array.isArray(v)) window._recetas = v;
+      else if (v && typeof v === "object") window._recetas = Object.values(v);
+      localStorage.setItem("recetas", JSON.stringify(window._recetas));
+      // Si la pestaña recetas está activa, renderizamos
+      const recTab = document.getElementById("tab-recetas");
+      if (recTab && recTab.classList.contains("active")) renderRecetas();
+    });
+  }catch(e){}
+})();
+
+const _guardarRecetasDeb = (()=>{ let t; return ()=>{
+  clearTimeout(t); t=setTimeout(()=>{
+    firebase.database().ref(_rutaRecetas).set(window._recetas||[]);
+    localStorage.setItem("recetas", JSON.stringify(window._recetas||[]));
+  },300);
+};})();
+
+// ---- Tabs (mostrar/ocultar vistas) ----
+const tabProductos = document.getElementById("tab-productos");
+const tabRecetas   = document.getElementById("tab-recetas");
+const vistaRecetas = document.getElementById("vista-recetas");
+
+// Detecta tu contenedor de productos (no lo renombramos)
+const vistaProductos = document.querySelector("#vista-lista, #productos, .vista-productos") || document.body;
+
+if (tabProductos && tabRecetas && vistaRecetas && vistaProductos){
+  tabProductos.addEventListener("click", ()=>{
+    tabProductos.classList.add("active");
+    tabRecetas.classList.remove("active");
+    vistaProductos.classList.remove("oculto");
+    vistaRecetas.classList.add("oculto");
+  });
+  tabRecetas.addEventListener("click", ()=>{
+    tabRecetas.classList.add("active");
+    tabProductos.classList.remove("active");
+    vistaProductos.classList.add("oculto");
+    vistaRecetas.classList.remove("oculto");
+    renderRecetas();
+  });
+}
+
+// ---- UI Recetas ----
+const buscarRecetas = document.getElementById("buscar-recetas");
+const listaRecetas  = document.getElementById("lista-recetas");
+const btnNuevaReceta= document.getElementById("btn-nueva-receta");
+
+buscarRecetas && buscarRecetas.addEventListener("input", renderRecetas);
+btnNuevaReceta && btnNuevaReceta.addEventListener("click", ()=> abrirEditorReceta());
+
+// Editor modal (si ya lo tienes en tu HTML)
+function abrirEditorReceta(receta){
+  // Si ya implementaste tu modal de editor, rellénalo aquí.
+  if (!document.getElementById("modal-receta-editor")){
+    alert("No encuentro el modal de editor de recetas (#modal-receta-editor). Si quieres te lo añado sin tocar estilos.");
+    return;
+  }
+  // Evento personalizado para tu editor (mantén tu implementación)
+  document.dispatchEvent(new CustomEvent("editar-receta", { detail: receta||null }));
+}
+
+// Render de tarjetas
+function renderRecetas(){
+  if (!listaRecetas) return;
+  const q = (buscarRecetas?.value || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu,"").trim();
+  const arr = (window._recetas||[])
+    .filter(r => !q || (r.titulo||"").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu,"").includes(q))
+    .sort((a,b)=> (a.titulo||"").localeCompare(b.titulo||""));
+  listaRecetas.innerHTML = "";
+  for (const r of arr){
+    const card = document.createElement("div");
+    card.className = "receta-card";
+
+    const img = document.createElement("img");
+    img.src = r.imagenURL || "https://placehold.co/80x80?text=%20";
+
+    const info = document.createElement("div");
+    info.className = "receta-info";
+    info.innerHTML = `<div><strong>${r.titulo || "(sin título)"}</strong></div>`;
+
+    const chips = document.createElement("div");
+    chips.className = "receta-chips";
+    const macros = calcularMacrosReceta(r);
+    chips.innerHTML = `
+      <span class="receta-chip">${isFinite(macros.kcal)? Math.round(macros.kcal):"—"} kcal</span>
+      <span class="receta-chip">C:${isFinite(macros.carb)? Math.round(macros.carb):"—"}</span>
+      <span class="receta-chip">P:${isFinite(macros.prot)? Math.round(macros.prot):"—"}</span>
+      <span class="receta-chip">x${r.porciones||1}</span>
+    `;
+
+    const acciones = document.createElement("div");
+    acciones.style.display="flex"; acciones.style.gap="6px";
+    const bEdit = document.createElement("button"); bEdit.textContent="Editar";
+    const bAdd  = document.createElement("button"); bAdd.textContent="Añadir a lista";
+    const bDel  = document.createElement("button"); bDel.textContent="Borrar";
+    bEdit.onclick = ()=> abrirEditorReceta(r);
+    bAdd.onclick  = ()=> { añadirRecetaALaLista(r); alert("Ingredientes añadidos a la lista"); };
+    bDel.onclick  = ()=> {
+      if(confirm("¿Borrar receta?")){
+        window._recetas = (window._recetas||[]).filter(x=>x.id!==r.id);
+        _guardarRecetasDeb(); renderRecetas();
+      }
+    };
+
+    acciones.append(bEdit,bAdd,bDel);
+    info.appendChild(chips);
+    card.append(img, info, acciones);
+    listaRecetas.append(card);
+  }
+}
+
+// ---- Sumar ingredientes a la lista (reutiliza tus estructuras) ----
+function añadirRecetaALaLista(receta){
+  if(!Array.isArray(receta?.ingredientes)) return;
+  // Asumimos que tienes `window.productos` y funciones de render/persistencia.
+  window.productos = window.productos || JSON.parse(localStorage.getItem("productos")||"[]");
+
+  const normalize = s=> (s||"").toLowerCase()
+        .normalize("NFD").replace(/\p{Diacritic}/gu,"")
+        .replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
+
+  for(const ing of receta.ingredientes){
+    const n = normalize(ing.nombre);
+    let prod = window.productos.find(p=> normalize(p.nombre)===n );
+    if(!prod){
+      prod = {
+        id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+        nombre: ing.nombre || "Ingrediente",
+        supermercado: "Otros",
+        cantidad: 0,
+        precio: 0,
+        comprado: false,
+        imagenURL: "",
+        categoria: null
+      };
+      window.productos.push(prod);
+    }
+    const cant = Number(ing.cantidad||1);
+    prod.cantidad = Math.max(1, (Number(prod.cantidad||0)) + (cant || 1));
+  }
+
+  // Persistencia y re-render usando tus funciones si existen
+  if (typeof persistir === "function") persistir(true);
+  else {
+    localStorage.setItem("productos", JSON.stringify(window.productos));
+    if (window.firebase?.database) firebase.database().ref("productos/Charly").set(window.productos);
+  }
+  if (typeof renderLista === "function") renderLista();
+}
+
+// ---- Macros (usa tus campos si los tienes) ----
+function calcularMacrosReceta(r){
+  let kcal=0, carb=0, prot=0, fat=0;
+  if(!Array.isArray(r?.ingredientes)) return {kcal:NaN,carb:NaN,prot:NaN,fat:NaN};
+  const normalize = s=> (s||"").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu,"").trim();
+
+  for(const ing of r.ingredientes){
+    const prod = (window.productos||[]).find(p=> normalize(p.nombre)===normalize(ing.nombre));
+    if(!prod || !prod.nutricion) continue;
+    let factor = 0;
+    if(ing.unidad==="g"||ing.unidad==="ml") factor = (ing.cantidad||0)/100;
+    else if (prod.gramosPorUnidad) factor = (prod.gramosPorUnidad*(ing.cantidad||1))/100;
+    kcal += (prod.nutricion.kcal_100||0)*factor;
+    carb += (prod.nutricion.carb_100||0)*factor;
+    prot += (prod.nutricion.prot_100||0)*factor;
+    fat  += (prod.nutricion.fat_100||0)*factor;
+  }
+  return {kcal, carb, prot, fat};
+}
+
+// ---- API pública mínima para que otros scripts puedan guardar recetas ----
+window.Recetas = {
+  add(r){
+    r.id = r.id || (Date.now().toString(36)+Math.random().toString(36).slice(2,7));
+    window._recetas.push(r);
+    _guardarRecetasDeb();
+    if (document.getElementById("tab-recetas")?.classList.contains("active")) renderRecetas();
+  }
+};
+// === Switch Productos/Recetas (no invade tu lógica) ===
+(function(){
+  const tabProd = document.getElementById("tab-productos");
+  const tabRec  = document.getElementById("tab-recetas");
+  const vistaProd = document.getElementById("lista-productos");   // tu sección actual
+  const vistaRec  = document.getElementById("vista-recetas");     // sección nueva
+
+  if(!tabProd || !tabRec || !vistaProd || !vistaRec) return;
+
+  function activarProd(){
+    tabProd.classList.add("active");
+    tabRec.classList.remove("active");
+    vistaProd.classList.remove("oculto");
+    vistaRec.classList.add("oculto");
+  }
+  function activarRec(){
+    tabRec.classList.add("active");
+    tabProd.classList.remove("active");
+    vistaRec.classList.remove("oculto");
+    vistaProd.classList.add("oculto");
+    if (typeof renderRecetas === "function") renderRecetas();
+  }
+
+  tabProd.addEventListener("click", activarProd);
+  tabRec.addEventListener("click", activarRec);
+})();

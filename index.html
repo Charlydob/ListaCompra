@@ -2,23 +2,23 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Lista de la Compra</title>
   <link rel="stylesheet" href="estilos.css" />
-    <link rel="apple-touch-icon" href="icono.png">
-      <link rel="manifest" href="manifest.json">
-      <meta name="theme-color" content="#4590ff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)">
-<script>
-  const opalBlue = getComputedStyle(document.documentElement).getPropertyValue('--opal-blue').trim();
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', opalBlue);
-</script>
-
+  <link rel="apple-touch-icon" href="icono.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4590ff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)">
+  <script>
+    const opalBlue = getComputedStyle(document.documentElement).getPropertyValue('--opal-blue')?.trim?.() || '#4590ff';
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', opalBlue);
+  </script>
 </head>
+
 <!-- SDKs de Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
-  
 
 <script>
   if ("serviceWorker" in navigator) {
@@ -30,65 +30,163 @@
 
 <body>
   <div id="app">
+
+    <!-- ÚNICO switch arriba -->
+    <div id="tabs-recetas" style="display:flex;gap:8px;margin:10px 12px 0;">
+      <button id="tab-productos" class="tab-soft active">Productos</button>
+      <button id="tab-recetas" class="tab-soft">Recetas</button>
+    </div>
+
+    <!-- Vista Productos (tu layout intacto) -->
     <header>
-        <div id="total-estimado" style="font-weight: bold; font-size: 18px; margin-bottom: 10px;">
-  Total estimado: 0,00 €
-</div>
+      <div id="total-estimado" style="font-weight: bold; font-size: 18px; margin-bottom: 10px;">
+        Total estimado: 0,00 €
+      </div>
 
       <select id="selector-super">
         <option value="Mercadona">Mercadona</option>
         <option value="Eroski">Eroski</option>
         <option value="Chino">Chino</option>
-        <option value="Carrefour">Carrefour</option> 
-        <option value="Otros">Otros</option>   
+        <option value="Carrefour">Carrefour</option>
+        <option value="Otros">Otros</option>
       </select>
+
       <input type="text" id="input-producto" placeholder="Escribe un producto..." />
       <button id="btn-agregar">➕ Añadir</button>
-      <select id="filtro-categoria" style="margin-top: 10px; padding: 8px; border-radius: 8px;">
-  <option value="">Todas las categorías</option>
-</select>
 
+      <select id="filtro-categoria" style="margin-top: 10px; padding: 8px; border-radius: 8px;">
+        <option value="">Todas las categorías</option>
+      </select>
     </header>
 
     <section id="lista-productos"></section>
+
+    <!-- Vista Recetas (nueva pestaña) -->
+    <section id="vista-recetas" class="oculto">
+      <div class="recetas-toolbar" style="display:flex;gap:8px;align-items:center;margin:10px 12px;">
+        <input id="buscar-recetas" placeholder="Buscar receta..." style="flex:1" />
+        <button id="btn-nueva-receta">➕ Nueva</button>
+      </div>
+      <div id="lista-recetas" class="lista" style="padding:0 12px 12px;"></div>
+    </section>
+
   </div>
-<!-- Modal edición -->
-<div id="modal-edicion" class="modal oculto">
-  <div class="modal-contenido-opal-horizontal">
-    <div class="imagen-lateral">
-      <img id="modal-preview-imagen" src="https://placehold.co/150" />
+
+  <!-- Modal edición de producto (tuyo, intacto) -->
+  <div id="modal-edicion" class="modal oculto">
+    <div class="modal-contenido-opal-horizontal">
+      <div class="imagen-lateral">
+        <img id="modal-preview-imagen" src="https://placehold.co/150" />
+      </div>
+
+      <div class="campos-laterales">
+        <h2>Editar producto</h2>
+
+        <label>Nombre</label>
+        <input type="text" id="modal-nombre" />
+
+        <label>Precio (€)</label>
+        <input type="number" id="modal-precio" step="0.01" />
+
+        <label>Super</label>
+        <select id="modal-super"></select>
+
+        <label>Categoría</label>
+        <input type="text" id="modal-categoria" placeholder="Ej. Frutas" />
+
+        <label>Imagen</label>
+        <input type="file" id="modal-imagen" accept="image/*" capture="environment" />
+
+        <div class="modal-botones">
+          <button id="btn-guardar-cambios">💾 Guardar</button>
+          <button id="btn-borrar-producto">🗑️ Borrar</button>
+          <button id="btn-cerrar-modal">❌ Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal editor de receta (lo mantenemos) -->
+  <div id="modal-receta-editor" class="modal oculto" style="z-index:1001">
+    <div class="modal-contenido-opal-horizontal">
+      <div class="imagen-lateral"><h2 style="margin:12px auto 8px">Editar receta</h2></div>
+      <div class="campos-laterales">
+        <label>Título</label>
+        <input id="re-titulo" type="text" placeholder="Ej. Pasta con pollo">
+
+        <label>Porciones</label>
+        <input id="re-porciones" type="number" min="1" value="4">
+
+        <label>Imagen</label>
+        <input id="re-imagen" type="file" accept="image/*" capture="environment">
+
+        <label>Desde texto</label>
+        <textarea id="re-texto" rows="6" placeholder="TÍTULO: ...&#10;PORCIONES: 4&#10;INGREDIENTES:&#10;- 200 g pechuga de pollo&#10;- 1 ud cebolla (120 g)&#10;PASOS:&#10;1) ...&#10;2) ..."></textarea>
+        <button id="re-analizar" style="grid-column:2/3">Analizar</button>
+
+        <div style="grid-column:1/-1; font-size:13px; color:#b7c1d6; margin-top:2px;">Ingredientes</div>
+        <div id="re-ings" style="grid-column:1/-1; display:flex; flex-direction:column; gap:8px"></div>
+        <button id="re-add-ing" style="grid-column:2/3">Añadir ingrediente</button>
+
+        <div style="grid-column:1/-1; font-size:13px; color:#b7c1d6; margin-top:8px;">Pasos</div>
+        <div id="re-pasos" style="grid-column:1/-1; display:flex; flex-direction:column; gap:8px"></div>
+        <button id="re-add-paso" style="grid-column:2/3">Añadir paso</button>
+
+        <div class="modal-botones" style="grid-column:1/-1">
+          <button id="re-guardar">💾 Guardar</button>
+          <button id="re-a-lista">🛒 Añadir a lista</button>
+          <button id="re-cerrar">❌ Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- ===== MODAL DETALLE DE RECETA (nuevo) ===== -->
+<div id="modal-receta-detalle" class="modal oculto" style="z-index:1002">
+  <div class="modal-contenido-opal-horizontal r-det">
+    <div class="r-det-col-izq">
+      <img id="r-det-img" src="https://placehold.co/180" alt="Foto receta">
+      <div class="r-det-macros">
+        <span class="r-chip" id="r-det-kcal">— kcal</span>
+        <span class="r-chip" id="r-det-carb">C: —</span>
+        <span class="r-chip" id="r-det-prot">P: —</span>
+        <span class="r-chip" id="r-det-fat">G: —</span>
+        <span class="r-chip" id="r-det-porc">x1</span>
+      </div>
     </div>
 
-    <div class="campos-laterales">
-      <h2>Editar producto</h2>
+    <div class="r-det-col-der">
+      <h2 id="r-det-titulo" class="r-edit" contenteditable="true">Título</h2>
 
-      <label>Nombre</label>
-      <input type="text" id="modal-nombre" />
+      <div class="r-bloque">
+        <div class="r-bloque-header">
+          <h3>Ingredientes</h3>
+          <div class="r-bot-row">
+            <button id="r-det-add-ing" class="btn-inline">+ Ingrediente</button>
+          </div>
+        </div>
+        <ul id="r-det-ings" class="r-ings"></ul>
+      </div>
 
-      <label>Precio (€)</label>
-      <input type="number" id="modal-precio" step="0.01" />
+      <div class="r-bloque">
+        <div class="r-bloque-header">
+          <h3>Elaboración</h3>
+          <div class="r-bot-row">
+            <button id="r-det-add-paso" class="btn-inline">+ Paso</button>
+          </div>
+        </div>
+        <ol id="r-det-pasos" class="r-pasos"></ol>
+      </div>
 
-      <label>Super</label>
-      <select id="modal-super"></select>
-
-      <label>Categoría</label>
-      <input type="text" id="modal-categoria" placeholder="Ej. Frutas" />
-
-      <label>Imagen</label>
-      <input type="file" id="modal-imagen" accept="image/*" capture="environment" />
-
-      <div class="modal-botones">
-        <button id="btn-guardar-cambios">💾 Guardar</button>
-        <button id="btn-borrar-producto">🗑️ Borrar</button>
-        <button id="btn-cerrar-modal">❌ Cancel</button>
+      <div class="r-botones">
+        <button id="r-det-guardar">💾 Guardar</button>
+        <button id="r-det-cerrar">❌ Cerrar</button>
       </div>
     </div>
   </div>
 </div>
 
-
-
-<script src="script.js"></script>
+<script src="script.productos.js"></script>
+<script src="script.recetas.js"></script>
 
 </body>
 </html>
