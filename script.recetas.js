@@ -21,8 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!db) { renderRecetas(); return; }
     db.ref(rutaRecetas).once("value").then(s=>{
       const v = s.val();
-      if (Array.isArray(v)) window._recetas = v;
-      else if (v && typeof v === "object") window._recetas = Object.values(v);
+      if (Array.isArray(v)) window._recetas = v; else if (v && typeof v === "object") window._recetas = Object.values(v);
       localStorage.setItem("recetas", JSON.stringify(window._recetas));
       renderRecetas();
     }).catch(()=> renderRecetas());
@@ -48,7 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
       imagenURL: "",
       ingredientes: [],
       pasos: []
-      // macros se calculan on-the-fly
     };
   }
   function abrirNuevaReceta(){
@@ -60,26 +58,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // === Añadir a la lista: si existe NO sumes; sólo desmarcar ===
   function añadirRecetaALaLista(receta){
     if(!receta || !Array.isArray(receta.ingredientes)) return;
-
     const norm = s => (s||"").toLowerCase()
       .normalize("NFD").replace(/\p{Diacritic}/gu,"")
-      .replace(/[^a-z0-9\s]/g," ")
-      .replace(/\s+/g," ")
-      .trim();
-
+      .replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
     window.productos = window.productos || JSON.parse(localStorage.getItem("productos")||"[]");
 
     for (const ing of receta.ingredientes){
       const key = norm(ing.nombre);
       let prod = window.productos.find(p => norm(p.nombre) === key);
-
-      if (prod){
-        prod.comprado = false; // no aumentar cantidad
-        continue;
-      }
+      if (prod){ prod.comprado = false; continue; }
       const uniIng = (ing.unidad||"ud").toLowerCase();
       const cantidadNueva = uniIng==="ud" ? Number(ing.cantidad||1) : 1;
-
       prod = {
         id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
         nombre: ing.nombre || "Ingrediente",
@@ -95,7 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       window.productos.push(prod);
     }
-
     if (typeof window.persistir === "function") window.persistir(true);
     else {
       localStorage.setItem("productos", JSON.stringify(window.productos));
@@ -159,10 +147,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========== MODAL DETALLE ==========
-  // Refs modal (se asume existe en el HTML con estos IDs)
+  // Refs modal (si no existe, se inyecta mínimo con los IDs esperados)
   let modal   = document.getElementById("modal-receta-detalle");
   if (!modal) {
-    // fallback mínimo por si faltara (no rediseña, sólo garantiza IDs)
     const html = `
       <div id="modal-receta-detalle" class="modal oculto">
         <div class="modal-contenido-opal-horizontal r-det">
@@ -222,6 +209,51 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnGuardar = $m("#r-det-guardar");
   const btnCerrar  = $m("#r-det-cerrar");
 
+  // ---- Botón “Pegar JSON” (se inyecta al lado de + Ingrediente)
+  function ensureImportButton(){
+    const bloqueIng = ingsEl?.closest(".r-bloque");
+    const row = bloqueIng?.querySelector(".r-bot-row");
+    if (!row || row.querySelector("#r-det-import-json")) return;
+    const btn = document.createElement("button");
+    btn.id = "r-det-import-json"; btn.className = "btn-inline";
+    btn.textContent = "📋 Pegar JSON";
+    row.prepend(btn);
+    btn.addEventListener("click", abrirModalJSON);
+  }
+
+  // ---- Modal para pegar JSON (inyectar si falta)
+  function ensureJsonModal(){
+    if (document.getElementById("modal-json")) return;
+    const html = `
+      <div id="modal-json">
+        <div class="box">
+          <h3 style="margin:0">Pegar JSON de receta</h3>
+          <textarea id="json-input" placeholder='Pega aquí el JSON de la receta...'></textarea>
+          <div class="acciones">
+            <button id="btn-json-cerrar">Cerrar</button>
+            <button id="btn-json-cargar">Cargar</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.insertAdjacentHTML("beforeend", html);
+
+    document.getElementById("btn-json-cerrar").addEventListener("click", cerrarModalJSON);
+    document.getElementById("btn-json-cargar").addEventListener("click", ()=>{
+      const txt = (document.getElementById("json-input").value||"").trim();
+      try{
+        importarDesdeJSON(txt);
+        cerrarModalJSON();
+      }catch(err){
+        alert("JSON inválido:\n" + (err?.message || err));
+      }
+    });
+    document.getElementById("modal-json").addEventListener("click", (e)=>{
+      if (e.target.id === "modal-json") cerrarModalJSON();
+    });
+  }
+  function abrirModalJSON(){ ensureJsonModal(); ensureImportButton(); document.getElementById("modal-json").classList.add("abierto"); }
+  function cerrarModalJSON(){ const m = document.getElementById("modal-json"); if (m) m.classList.remove("abierto"); }
+
   let recetaDetalle = null;
 
   // Abre modal por ID existente
@@ -237,6 +269,44 @@ document.addEventListener("DOMContentLoaded", () => {
     recetaDetalle = JSON.parse(JSON.stringify(obj));
     renderDetalle();
     modal.classList.remove("oculto");
+    // Asegura botón de import y modal JSON disponibles
+    ensureImportButton(); ensureJsonModal();
+  }
+
+  // Normaliza e importa JSON
+  function importarDesdeJSON(txt){
+    // Si viene con formato “```json ... ```”, aísla el objeto
+    const match = txt.match(/\{[\s\S]*\}$/m) || txt.match(/\{[\s\S]*?\}/m);
+    const raw = match ? match[0] : txt;
+    const data = JSON.parse(raw);
+
+    // Validación mínima
+    if (!data || typeof data !== "object") throw new Error("No es un objeto JSON");
+    if (!Array.isArray(data.ingredientes)) data.ingredientes = [];
+    if (!Array.isArray(data.pasos)) data.pasos = [];
+
+    // Normalizar ingredientes
+    const ings = data.ingredientes.map(it=>{
+      const nombre = (it?.nombre || "").toString().trim();
+      const cantidad = Number(it?.cantidad || 0);
+      let unidad = (it?.unidad || "ud").toString().toLowerCase();
+      if (!["ud","g","ml"].includes(unidad)) unidad = "ud";
+      return { nombre, cantidad: isFinite(cantidad) ? cantidad : 1, unidad, tengo:false };
+    });
+
+    // Construir objeto receta
+    const nueva = {
+      id: recetaDetalle?.id || "r_" + Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+      titulo: (data.titulo || "Receta sin título").toString().trim(),
+      porciones: Number(data.porciones || 1),
+      imagenURL: (data.imagenURL || "").toString(),
+      ingredientes: ings,
+      pasos: data.pasos.map(p=> (p||"").toString().trim()).filter(Boolean)
+    };
+
+    // Inyectar en el modal actual
+    recetaDetalle = nueva;
+    renderDetalle();
   }
 
   // Render modal
@@ -302,6 +372,9 @@ document.addEventListener("DOMContentLoaded", () => {
       del.addEventListener("click", (e)=>{ e.stopPropagation(); recetaDetalle.pasos.splice(i,1); renderDetalle(); });
       pasosEl.appendChild(li);
     });
+
+    // Asegurar botón de import visible
+    ensureImportButton();
   }
 
   function activarInline(el, onCommit){
@@ -331,11 +404,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if(!recetaDetalle) return;
     recetaDetalle.ingredientes = (recetaDetalle.ingredientes||[]).filter(i=> (i.nombre||"").trim());
     recetaDetalle.pasos = (recetaDetalle.pasos||[]).filter(p=> (p||"").trim());
-
     const arr = window._recetas || [];
     const ix = arr.findIndex(x=>x.id===recetaDetalle.id);
     if (ix>=0) arr[ix] = recetaDetalle; else arr.push(recetaDetalle);
-
     if (db) db.ref(rutaRecetas).set(arr);
     localStorage.setItem("recetas", JSON.stringify(arr));
     renderRecetas(); cerrar();
