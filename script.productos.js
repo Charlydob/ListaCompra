@@ -780,8 +780,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Tabs: Productos / Recetas / Gestión ---
-  function activarTab(tipo) {
+    function activarTab(tipo) {
     if (!tabProd || !tabRec || !tabGest) return;
 
     tabProd.classList.toggle("active", tipo === "prod");
@@ -794,6 +793,9 @@ document.addEventListener("DOMContentLoaded", () => {
       vistaRec.classList.toggle("oculto", tipo !== "rec");
     if (vistaGestion)
       vistaGestion.classList.toggle("oculto", tipo !== "gest");
+
+    // 👇 Modo visual ligero para Gestión
+    document.body.classList.toggle("modo-gestion", tipo === "gest");
 
     if (tipo === "gest") renderGestionLista();
   }
