@@ -1,7 +1,10 @@
 // ============ PRODUCTOS ============
 document.addEventListener("DOMContentLoaded", () => {
-  const COMIDAS_POR_DIA = 2; // comidas/día por persona
 
+  // EVITAR SCROLL RARO / PANTALLA EN BLANCO AL ABRIR
+  window.scrollTo(0, 0);
+
+  const COMIDAS_POR_DIA = 2; // ...
   // --- Firebase (compat) ---
   const firebaseConfig = {
     apiKey: "AIzaSyBDcOCQ0OrAaxr-yhhD5iVHqegwvhpjZaE",
@@ -799,8 +802,12 @@ document.addEventListener("DOMContentLoaded", () => {
   tabRec?.addEventListener("click", () => activarTab("rec"));
   tabGest?.addEventListener("click", () => activarTab("gest"));
 
-  // --- Init ---
-  cargarDesdeLocalStorage();
+   // --- Init optimizado ---
+  const tieneLocal = cargarDesdeLocalStorage();
+  if (!tieneLocal) {
+    // si no hay datos aún, al menos actualiza cabecera vacía
+    calcularTotalEstimado();
+  }
+  // cuando llegue Firebase, sobreescribe y re-renderiza una vez
   cargarDesdeFirebase();
-  renderLista();
 });
