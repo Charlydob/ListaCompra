@@ -38,26 +38,35 @@
     </div>
 
     <!-- Vista Productos (tu layout intacto) -->
-    <header>
-      <div id="total-estimado" style="font-weight: bold; font-size: 18px; margin-bottom: 10px;">
-        Total estimado: 0,00 €
-      </div>
+<header>
+  <div id="total-estimado" style="font-weight: bold; font-size: 18px; margin-bottom: 4px;">
+    Total compra: 0,00 €
+  </div>
 
-      <select id="selector-super">
-        <option value="Mercadona">Mercadona</option>
-        <option value="Eroski">Eroski</option>
-        <option value="Chino">Chino</option>
-        <option value="Carrefour">Carrefour</option>
-        <option value="Otros">Otros</option>
-      </select>
+  <!-- NUEVO: totales por persona -->
+  <div id="total-charly" style="font-size: 14px; opacity: 0.9; margin-bottom: 2px;">
+    Charly: 0,00 € — 0 comidas (~0,0 días)
+  </div>
+  <div id="total-laura" style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">
+    Laura: 0,00 € — 0 comidas (~0,0 días)
+  </div>
+  <!-- FIN NUEVO -->
 
-      <input type="text" id="input-producto" placeholder="Escribe un producto..." />
-      <button id="btn-agregar">➕ Añadir</button>
+  <select id="selector-super">
+    <option value="Mercadona">Mercadona</option>
+    <option value="Eroski">Eroski</option>
+    <option value="Chino">Chino</option>
+    <option value="Carrefour">Carrefour</option>
+    <option value="Otros">Otros</option>
+  </select>
 
-      <select id="filtro-categoria" style="margin-top: 10px; padding: 8px; border-radius: 8px;">
-        <option value="">Todas las categorías</option>
-      </select>
-    </header>
+  <input type="text" id="input-producto" placeholder="Escribe un producto..." />
+  <button id="btn-agregar">➕ Añadir</button>
+
+  <select id="filtro-categoria" style="margin-top: 10px; padding: 8px; border-radius: 8px;">
+    <option value="">Todas las categorías</option>
+  </select>
+</header>
 
     <section id="lista-productos"></section>
 
