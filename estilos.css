@@ -862,27 +862,43 @@ select:focus, input:focus{
   opacity:.9;
 }
 
+/* ===== Pestaña Gestión: rendimiento ===== */
+
+/* scroll suave en iOS */
+#vista-gestion{
+  -webkit-overflow-scrolling: touch;
+}
+
+/* filas más ligeras (menos sombras) */
 .gestion-row{
   margin-top:6px;
   padding:10px 12px;
   border-radius:14px;
   border:1px solid var(--stroke);
-  background:linear-gradient(140deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-  box-shadow:0 10px 22px rgba(0,0,0,.35);
+  background:rgba(10,14,22,.95);
+  box-shadow:0 4px 10px rgba(0,0,0,.35);
 }
 
-.gestion-row input[type="text"],
-.gestion-row input[type="number"],
-.gestion-row select{
-  width:100%;
-  padding:6px 8px;
-  font-size:13px;
-  border-radius:10px;
-  border:1px solid var(--stroke);
-  background:var(--glass);
-  color:var(--txt);
+/* ===== MODO LIGERO cuando estás en Gestión ===== */
+body.modo-gestion{
+  background: linear-gradient(180deg, #06070c, #05060a);
 }
 
-.gestion-row input[type="checkbox"]{
-  accent-color: var(--opal-cyan);
+/* quita los orbes flotantes pesados */
+body.modo-gestion::before,
+body.modo-gestion::after{
+  display:none;
+}
+
+/* quita el glow extra del app */
+body.modo-gestion #app::before{
+  display:none;
+}
+
+/* inputs aún más sencillos en gestión */
+body.modo-gestion .gestion-row input[type="text"],
+body.modo-gestion .gestion-row input[type="number"],
+body.modo-gestion .gestion-row select{
+  background:rgba(15,19,32,.95);
+  box-shadow:none;
 }
