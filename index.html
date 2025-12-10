@@ -32,10 +32,11 @@
   <div id="app">
 
     <!-- ÚNICO switch arriba -->
-    <div id="tabs-recetas" style="display:flex;gap:8px;margin:10px 12px 0;">
-      <button id="tab-productos" class="tab-soft active">Productos</button>
-      <button id="tab-recetas" class="tab-soft">Recetas</button>
-    </div>
+<div id="tabs-recetas" style="display:flex;gap:8px;margin:10px 12px 0;">
+  <button id="tab-productos" class="tab-soft active">Productos</button>
+  <button id="tab-recetas" class="tab-soft">Recetas</button>
+  <button id="tab-gestion" class="tab-soft">Gestión</button>
+</div>
 
     <!-- Vista Productos (tu layout intacto) -->
 <header>
@@ -78,7 +79,36 @@
       </div>
       <div id="lista-recetas" class="lista" style="padding:0 12px 12px;"></div>
     </section>
+<!-- Vista Gestión (nueva pestaña) -->
+<section id="vista-gestion" class="oculto">
+  <div class="gestion-toolbar">
+    <div class="gestion-bulk-row">
+      <input id="bulk-precio" type="number" step="0.01" placeholder="Precio €" />
+      <input id="bulk-comidas" type="number" step="1" min="0" placeholder="Comidas/pack" />
+      <select id="bulk-para">
+        <option value="">Para…</option>
+        <option value="ambos">Ambos</option>
+        <option value="charly">Charly</option>
+        <option value="laura">Laura</option>
+      </select>
+      <button id="btn-bulk-aplicar">Aplicar</button>
+    </div>
+    <div class="gestion-hint">
+      Marca varios productos y aplica cambios comunes.
+    </div>
+  </div>
 
+  <div class="gestion-header">
+    <span></span>
+    <span>Nombre</span>
+    <span>Precio</span>
+    <span>Comidas</span>
+    <span>Para</span>
+    <span>✓</span>
+  </div>
+
+  <div id="lista-gestion"></div>
+</section>
   </div>
 
   <!-- Modal edición de producto (tuyo, intacto) -->
