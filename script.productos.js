@@ -1,7 +1,6 @@
 // ============ PRODUCTOS ============
 document.addEventListener("DOMContentLoaded", () => {
-  // --- Constantes ---
-  const COMIDAS_POR_DIA = 2; // <<< nº de comidas por día/persona
+  const COMIDAS_POR_DIA = 2; // comidas/día por persona
 
   // --- Firebase (compat) ---
   const firebaseConfig = {
@@ -42,6 +41,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalLauraEl = document.getElementById("total-laura");
   const filtroCatSel = document.getElementById("filtro-categoria");
 
+  // vista gestión
+  const vistaGestion = document.getElementById("vista-gestion");
+  const listaGestion = document.getElementById("lista-gestion");
+  const bulkPrecio = document.getElementById("bulk-precio");
+  const bulkComidas = document.getElementById("bulk-comidas");
+  const bulkPara = document.getElementById("bulk-para");
+  const btnBulkAplicar = document.getElementById("btn-bulk-aplicar");
+
+  // tabs
+  const tabProd = document.getElementById("tab-productos");
+  const tabRec = document.getElementById("tab-recetas");
+  const tabGest = document.getElementById("tab-gestion");
+  const vistaRec = document.getElementById("vista-recetas");
+
   // --- Helpers ---
   const normalize = (s) =>
     (s || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -75,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let comidasLaura = 0;
 
     for (const p of productos) {
-      if (p.comprado) continue; // solo lo pendiente
+      if (p.comprado) continue;
 
       const cantidad = Number(p.cantidad || 0);
       const precioUnit = Number(p.precio || 0);
@@ -173,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Render ---
+  // --- Render productos (tarjetas) ---
   function limpiarGrupos() {
     gruposDOM.clear();
     if (contenedorLista) contenedorLista.innerHTML = "";
@@ -243,12 +256,15 @@ document.addEventListener("DOMContentLoaded", () => {
     nombre.className = "nombre-producto";
     nombre.textContent = prod.nombre;
 
-    // Pequeño resumen extra (comidas + para) debajo del nombre
     const meta = document.createElement("div");
+    meta.className = "producto-meta";
     meta.style.fontSize = "11px";
     meta.style.opacity = "0.8";
     const txtComidas = prod.comidas ? `${prod.comidas} comidas/pack` : "—";
-    const txtPara = (prod.para || "ambos");
+    const txtPara =
+      (prod.para || "ambos") === "ambos"
+        ? "Ambos"
+        : (prod.para || "").charAt(0).toUpperCase() + (prod.para || "").slice(1);
     meta.textContent = `${txtComidas} · ${txtPara}`;
 
     const wrapTexto = document.createElement("div");
@@ -257,7 +273,6 @@ document.addEventListener("DOMContentLoaded", () => {
     wrapTexto.appendChild(nombre);
     wrapTexto.appendChild(meta);
 
-    // Cantidad
     const wrapCantidad = document.createElement("div");
     wrapCantidad.style.display = "flex";
     wrapCantidad.style.alignItems = "center";
@@ -360,7 +375,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function actualizarTarjetaComprado(id, comprado) {
     const card = buscarTarjetaDOM(id);
-    if (card) card.classList.toggle("tarjeta-comprado", !!comprado);
+    if (!card) return;
+    card.classList.toggle("tarjeta-comprado", !!comprado);
+    const chk = card.querySelector(".checkbox");
+    if (chk) chk.checked = !!comprado;
   }
 
   function reordenarTarjetaEnGrupo(prod) {
@@ -384,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
     for (const { el } of items) grupoRef.contenedor.appendChild(el);
   }
 
-  // --- Inyección de nuevos campos en el modal ---
+  // --- Campos extra en modal ---
   (function ensureCamposExtra() {
     const cont = document.querySelector("#modal-edicion .campos-laterales");
     if (!cont) return;
@@ -401,7 +419,6 @@ document.addEventListener("DOMContentLoaded", () => {
         <label>g/ml por unidad</label>
         <input type="number" id="modal-gpu" step="0.01" placeholder="0 = desconocido" />
 
-        <!-- NUEVO: comidas y para quién -->
         <label>Comidas que da el paquete</label>
         <input type="number" id="modal-comidas" step="1" min="0" placeholder="Ej. 2" />
 
@@ -529,13 +546,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const card = buscarTarjetaDOM(productoActual.id);
         if (card) {
           const nombreEl = card.querySelector(".nombre-producto");
-          const metaEl = card.querySelector("div:nth-child(2)");
           if (nombreEl) nombreEl.textContent = productoActual.nombre;
+          const metaEl = card.querySelector(".producto-meta");
           if (metaEl) {
             const txtComidas = productoActual.comidas
               ? `${productoActual.comidas} comidas/pack`
               : "—";
-            metaEl.textContent = `${txtComidas} · ${productoActual.para || "ambos"}`;
+            const txtPara =
+              (productoActual.para || "ambos") === "ambos"
+                ? "Ambos"
+                : (productoActual.para || "").charAt(0).toUpperCase() +
+                  (productoActual.para || "").slice(1);
+            metaEl.textContent = `${txtComidas} · ${txtPara}`;
           }
           const imgEl = card.querySelector("img");
           if (imgEl && productoActual.imagenURL) imgEl.src = productoActual.imagenURL;
@@ -638,6 +660,144 @@ document.addEventListener("DOMContentLoaded", () => {
       filtroCategoria = e.target.value || "";
       mantenerScrollDurante(() => renderLista());
     });
+
+  // --- Vista Gestión (lista editable + selección múltiple) ---
+  function renderGestionLista() {
+    if (!listaGestion) return;
+    listaGestion.innerHTML = "";
+
+    const orden = [...productos].sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    for (const p of orden) {
+      const row = document.createElement("div");
+      row.className = "gestion-row";
+      row.dataset.id = p.id;
+
+      const chkSel = document.createElement("input");
+      chkSel.type = "checkbox";
+      chkSel.className = "gestion-bulk";
+
+      const inpNombre = document.createElement("input");
+      inpNombre.type = "text";
+      inpNombre.value = p.nombre || "";
+
+      const inpPrecio = document.createElement("input");
+      inpPrecio.type = "number";
+      inpPrecio.step = "0.01";
+      inpPrecio.value = p.precio || 0;
+
+      const inpComidas = document.createElement("input");
+      inpComidas.type = "number";
+      inpComidas.step = "1";
+      inpComidas.min = "0";
+      inpComidas.value = p.comidas || 0;
+
+      const selPara = document.createElement("select");
+      selPara.innerHTML = `
+        <option value="ambos">Ambos</option>
+        <option value="charly">Charly</option>
+        <option value="laura">Laura</option>
+      `;
+      selPara.value = (p.para || "ambos").toLowerCase();
+
+      const chkComprado = document.createElement("input");
+      chkComprado.type = "checkbox";
+      chkComprado.checked = !!p.comprado;
+
+      // listeners individuales
+      inpNombre.addEventListener("change", () => {
+        p.nombre = inpNombre.value.trim();
+        persistir();
+        renderLista();
+      });
+
+      inpPrecio.addEventListener("change", () => {
+        p.precio = Number(inpPrecio.value || 0);
+        persistir();
+        calcularTotalEstimado();
+      });
+
+      inpComidas.addEventListener("change", () => {
+        p.comidas = Number(inpComidas.value || 0);
+        persistir();
+        calcularTotalEstimado();
+      });
+
+      selPara.addEventListener("change", () => {
+        p.para = selPara.value;
+        persistir();
+        calcularTotalEstimado();
+      });
+
+      chkComprado.addEventListener("change", () => {
+        p.comprado = chkComprado.checked;
+        actualizarTarjetaComprado(p.id, p.comprado);
+        persistir();
+        calcularTotalEstimado();
+      });
+
+      row.append(
+        chkSel,
+        inpNombre,
+        inpPrecio,
+        inpComidas,
+        selPara,
+        chkComprado
+      );
+
+      listaGestion.appendChild(row);
+    }
+  }
+
+  if (btnBulkAplicar && listaGestion) {
+    btnBulkAplicar.addEventListener("click", () => {
+      const rows = [...listaGestion.querySelectorAll(".gestion-row")];
+      const idsSeleccionados = rows
+        .filter((r) => r.querySelector(".gestion-bulk")?.checked)
+        .map((r) => r.dataset.id);
+
+      if (!idsSeleccionados.length) return;
+
+      const precioVal = bulkPrecio.value.trim();
+      const comidasVal = bulkComidas.value.trim();
+      const paraVal = bulkPara.value;
+
+      for (const id of idsSeleccionados) {
+        const p = productos.find((x) => x.id === id);
+        if (!p) continue;
+        if (precioVal !== "") p.precio = Number(precioVal || 0);
+        if (comidasVal !== "") p.comidas = Number(comidasVal || 0);
+        if (paraVal) p.para = paraVal;
+      }
+
+      persistir(true);
+      calcularTotalEstimado();
+      renderLista();
+      renderGestionLista();
+    });
+  }
+
+  // --- Tabs: Productos / Recetas / Gestión ---
+  function activarTab(tipo) {
+    if (!tabProd || !tabRec || !tabGest) return;
+
+    tabProd.classList.toggle("active", tipo === "prod");
+    tabRec.classList.toggle("active", tipo === "rec");
+    tabGest.classList.toggle("active", tipo === "gest");
+
+    if (contenedorLista)
+      contenedorLista.classList.toggle("oculto", tipo !== "prod");
+    if (vistaRec)
+      vistaRec.classList.toggle("oculto", tipo !== "rec");
+    if (vistaGestion)
+      vistaGestion.classList.toggle("oculto", tipo !== "gest");
+
+    if (tipo === "gest") renderGestionLista();
+  }
+
+  tabProd?.addEventListener("click", () => activarTab("prod"));
+  tabRec?.addEventListener("click", () => activarTab("rec"));
+  tabGest?.addEventListener("click", () => activarTab("gest"));
 
   // --- Init ---
   cargarDesdeLocalStorage();
