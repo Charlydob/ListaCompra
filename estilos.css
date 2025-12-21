@@ -153,8 +153,7 @@ select:focus, input:focus{
 }
 .tarjeta-controles{
   margin-left:auto;
-  display:flex; flex-direction:column; gap:6px;
-  align-items:flex-end;
+  display:flex; flex-direction:column; align-items:flex-end; gap:6px;
   flex-shrink:0;
 }
 .controles-cantidad{display:flex; align-items:center; gap:8px; flex-shrink:0;}
@@ -168,23 +167,25 @@ select:focus, input:focus{
 .btn-qty:hover{box-shadow:0 0 0 6px #5ee8ff14}
 
 .stock-field{
-  display:inline-flex; align-items:center; gap:6px;
-  width:auto; max-width:fit-content;
+  display:inline-flex; align-items:center; justify-content:flex-end; gap:6px;
+  width:fit-content; max-width:fit-content;
   color:var(--muted);
-  font-size:10px; opacity:.7;
+  font-size:9px; opacity:.7; line-height:1; margin:0;
 }
 .stock-input{
-  width:44px; height:22px;
-  padding:0 8px;
-  border-radius:10px;
+  width:32px; min-width:32px; max-width:32px;
+  height:18px; padding:0 6px;
+  font-size:12px; line-height:18px; text-align:right;
+  border-radius:9px;
   border:1px solid var(--stroke);
   background: var(--glass-2);
-  color:var(--txt);
-  font-weight:600;
-  font-size:12px;
-  text-align:right;
+  color:var(--txt); font-weight:600;
+  appearance: textfield;
   outline:none;
 }
+.stock-input::-webkit-outer-spin-button,
+.stock-input::-webkit-inner-spin-button{appearance:none; margin:0;}
+.stock-input[type=number]{-moz-appearance:textfield;}
 
 .btn-comprados{
   margin-top:8px; width:100%; padding:10px 12px; border-radius:12px;
