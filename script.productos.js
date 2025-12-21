@@ -266,6 +266,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const activos = arr.filter((p) => !p.comprado);
       const comprados = arr.filter((p) => p.comprado);
 
+      if (!activos.length) grupo.contenedor.classList.add("oculto");
+      else grupo.contenedor.classList.remove("oculto");
+
       for (const p of activos) grupo.contenedor.appendChild(crearTarjetaProducto(p));
 
       if (comprados.length) {
@@ -342,9 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
     wrapTexto.appendChild(meta);
 
     const wrapCantidad = document.createElement("div");
-    wrapCantidad.style.display = "flex";
-    wrapCantidad.style.alignItems = "center";
-    wrapCantidad.style.gap = "8px";
+    wrapCantidad.className = "controles-cantidad";
 
     const btnMenos = document.createElement("button");
     btnMenos.type = "button";
@@ -372,28 +373,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     wrapCantidad.append(btnMenos, contador, btnMas);
 
-    const chipStock = document.createElement("div");
-    chipStock.className = "chip-stock";
+    const chipStock = document.createElement("label");
+    chipStock.className = "stock-field";
+    chipStock.textContent = "En stock:";
 
-    const btnStockMenos = document.createElement("button");
-    btnStockMenos.type = "button";
-    btnStockMenos.textContent = "–";
-    btnStockMenos.className = "chip-stock-btn";
+    const inputStock = document.createElement("input");
+    inputStock.type = "number";
+    inputStock.inputMode = "numeric";
+    inputStock.className = "stock-input";
+    inputStock.value = prod.stock ?? 0;
+    inputStock.min = "0";
 
     const valorStock = document.createElement("span");
-    valorStock.className = "chip-stock-valor";
+    valorStock.className = "chip-stock-valor oculto";
     valorStock.textContent = prod.stock ?? 0;
 
-    const btnStockMas = document.createElement("button");
-    btnStockMas.type = "button";
-    btnStockMas.textContent = "+";
-    btnStockMas.className = "chip-stock-btn";
+    chipStock.append(inputStock);
 
-    const etiquetaStock = document.createElement("div");
-    etiquetaStock.className = "chip-stock-label";
-    etiquetaStock.textContent = "Stock";
-
-    chipStock.append(etiquetaStock, btnStockMenos, valorStock, btnStockMas);
+    const contDerecha = document.createElement("div");
+    contDerecha.className = "tarjeta-controles";
+    contDerecha.append(wrapCantidad, chipStock);
 
     // Gestos táctiles en contador
     let startY = null;
@@ -438,14 +437,13 @@ document.addEventListener("DOMContentLoaded", () => {
       calcularTotalEstimado();
     });
 
-    btnStockMas.addEventListener("click", (e) => {
-      e.stopPropagation();
-      modificarStock(prod, 1);
-    });
-
-    btnStockMenos.addEventListener("click", (e) => {
-      e.stopPropagation();
-      modificarStock(prod, -1);
+    inputStock.addEventListener("click", (e) => e.stopPropagation());
+    inputStock.addEventListener("change", (e) => {
+      const nuevo = Math.max(0, Number(e.target.value || 0));
+      prod.stock = nuevo;
+      actualizarTarjetaStock(prod.id, nuevo);
+      renderStockResultados();
+      persistir();
     });
 
     checkbox.addEventListener("change", () => {
@@ -457,11 +455,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     tarjeta.addEventListener("click", (e) => {
-      if ([checkbox, btnMas, btnMenos].includes(e.target)) return;
+      if ([checkbox, btnMas, btnMenos, inputStock].includes(e.target)) return;
       abrirModalEdicion(prod);
     });
 
-    tarjeta.append(checkbox, imagen, wrapTexto, wrapCantidad, chipStock);
+    tarjeta.append(checkbox, imagen, wrapTexto, contDerecha);
     return tarjeta;
   }
 
@@ -475,8 +473,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function actualizarTarjetaStock(id, stock) {
-    const chip = buscarTarjetaDOM(id)?.querySelector(".chip-stock-valor");
+    const tarjeta = buscarTarjetaDOM(id);
+    if (!tarjeta) return;
+    const chip = tarjeta.querySelector(".chip-stock-valor");
+    const input = tarjeta.querySelector(".stock-input");
     if (chip) chip.textContent = stock;
+    if (input) input.value = stock;
   }
 
   function actualizarTarjetaComprado(id, comprado) {
