@@ -722,6 +722,30 @@ document.addEventListener("DOMContentLoaded", () => {
     150
   );
 
+  function crearToggleVisibilidad(p) {
+    const btn = document.createElement("button");
+    btn.className = "stock-toggle";
+
+    const syncEstado = () => {
+      const visible = p.visibleStock !== false;
+      btn.textContent = visible ? "⏷" : "⏵";
+      btn.title = visible ? "Visible en stock" : "Oculto en stock";
+      btn.ariaLabel = btn.title;
+    };
+
+    btn.addEventListener("click", () => {
+      p.visibleStock = p.visibleStock === false;
+      syncEstado();
+      renderStockVisibles();
+      renderStockResumen();
+      renderStockResultados();
+      persistir();
+    });
+
+    syncEstado();
+    return btn;
+  }
+
   if (btnAgregar)
     btnAgregar.addEventListener("click", () => {
       const nombreRaw = (input.value || "").trim();
@@ -819,21 +843,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     controles.append(btnMenos, valor, btnMas);
 
-    const visibilidad = document.createElement("select");
-    visibilidad.innerHTML = `
-      <option value="visible">Visible</option>
-      <option value="oculto">Oculto</option>
-    `;
-    visibilidad.value = p.visibleStock === false ? "oculto" : "visible";
-    visibilidad.addEventListener("change", () => {
-      p.visibleStock = visibilidad.value === "visible";
-      renderStockVisibles();
-      renderStockResumen();
-      persistir();
-    });
+    const visibilidad = crearToggleVisibilidad(p);
 
     const btnALista = document.createElement("button");
-    btnALista.textContent = "Añadir a lista";
+    btnALista.className = "stock-add-btn";
+    btnALista.textContent = "🛒";
     btnALista.addEventListener("click", () => {
       p.comprado = false;
       actualizarTarjetaComprado(p.id, false);
@@ -876,10 +890,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderStockResumen() {
     if (!stockResumen) return;
-    const totalUnidades = productos.reduce((acc, p) => acc + Number(p.stock || 0), 0);
-    const visibles = productos.filter((p) => p.visibleStock !== false).length;
-    const ocultos = productos.length - visibles;
-    stockResumen.textContent = `Unidades en stock: ${totalUnidades} · Visibles: ${visibles} · Ocultos: ${ocultos}`;
+    const visibles = productos.filter((p) => p.visibleStock !== false);
+    const stockProductos = productos.filter((p) => Number(p.stock || 0) > 0);
+    const faltan = visibles.filter((p) => Number(p.stock || 0) === 0);
+    const total = productos.length;
+
+    stockResumen.textContent = `Stock: ${stockProductos.length} | Falta: ${faltan.length} | Total: ${total}`;
   }
 
   function crearItemVisible(p) {
@@ -905,22 +921,11 @@ document.addEventListener("DOMContentLoaded", () => {
       persistir();
     });
 
-    const selVisible = document.createElement("select");
-    selVisible.innerHTML = `
-      <option value="visible">Visible</option>
-      <option value="oculto">Oculto</option>
-    `;
-    selVisible.value = p.visibleStock === false ? "oculto" : "visible";
-    selVisible.addEventListener("change", () => {
-      p.visibleStock = selVisible.value === "visible";
-      renderStockVisibles();
-      renderStockResumen();
-      renderStockResultados();
-      persistir();
-    });
+    const selVisible = crearToggleVisibilidad(p);
 
     const btnLista = document.createElement("button");
-    btnLista.textContent = "Añadir a lista";
+    btnLista.className = "stock-add-btn";
+    btnLista.textContent = "🛒";
     btnLista.addEventListener("click", () => {
       p.comprado = false;
       actualizarTarjetaComprado(p.id, false);
