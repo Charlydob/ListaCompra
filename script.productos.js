@@ -887,7 +887,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fila.className = "stock-visible-item";
 
     const nombre = document.createElement("div");
-    nombre.className = "nombre";
+    nombre.className = "stock-nombre";
     nombre.textContent = p.nombre;
 
     const inpStock = document.createElement("input");
