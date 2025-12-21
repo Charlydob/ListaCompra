@@ -160,6 +160,27 @@ select:focus, input:focus{
 .btn-qty:active{transform:translateY(1px)}
 .btn-qty:hover{box-shadow:0 0 0 6px #5ee8ff14}
 
+.chip-stock{
+  position:absolute; right:10px; bottom:10px;
+  display:flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:12px;
+  background: var(--glass);
+  border:1px solid var(--stroke);
+  box-shadow:0 8px 18px rgba(0,0,0,.35);
+}
+.chip-stock-label{font-size:11px; color:var(--muted);}
+.chip-stock-btn{
+  min-width:28px; height:28px; border-radius:10px; border:1px solid var(--stroke);
+  background: var(--glass-2); color:var(--txt); cursor:pointer;
+}
+
+.btn-comprados{
+  margin-top:8px; width:100%; padding:10px 12px; border-radius:12px;
+  border:1px dashed var(--stroke); background:transparent; color:var(--txt);
+  cursor:pointer; opacity:.8;
+}
+.cont-comprados{margin-top:8px;}
+
 /* ===== Modal ===== */
 .modal{
   position:fixed; inset:0; display:flex; justify-content:center; align-items:center;
@@ -247,6 +268,24 @@ select:focus, input:focus{
   border:1px solid rgba(255,255,255,.08);
 }
 .titulo-receta{flex:1; font-weight:600}
+
+/* ===== Stock ===== */
+.stock-toolbar{display:flex; flex-direction:column; gap:8px; margin:12px;}
+.stock-hint{font-size:13px; color:var(--muted);}
+.lista-stock{display:flex; flex-direction:column; gap:10px; padding:0 12px 12px;}
+.stock-card{
+  padding:12px; border-radius:12px; border:1px solid var(--stroke);
+  background: var(--glass);
+  box-shadow:0 10px 20px rgba(0,0,0,.35);
+  display:flex; flex-direction:column; gap:6px;
+}
+.stock-card-titulo{font-weight:700; font-size:16px;}
+.stock-card-meta{font-size:13px; color:var(--muted);}
+.stock-card-datos{font-size:13px; color:var(--txt); opacity:.9;}
+.stock-card-controles{display:flex; align-items:center; gap:8px;}
+.stock-card-controles button{min-width:36px; padding:8px 10px; border-radius:10px; border:1px solid var(--stroke); background:var(--glass-2); color:var(--txt);}
+.stock-card-controles span{min-width:42px; text-align:center; font-weight:700;}
+.stock-placeholder{padding:14px; color:var(--muted);}
 .macros{display:flex; gap:6px; flex-wrap:wrap}
 .mchip{
   font-size:12px; padding:2px 8px; border-radius:999px;

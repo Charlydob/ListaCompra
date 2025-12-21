@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let filtroCategoria = "";
   let gruposDOM = new Map();
   let productoActual = null;
+  const estadoComprados = {};
 
   // --- DOM refs ---
   const input = document.getElementById("input-producto");
@@ -55,8 +56,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // tabs
   const tabProd = document.getElementById("tab-productos");
   const tabRec = document.getElementById("tab-recetas");
+  const tabStock = document.getElementById("tab-stock");
   const tabGest = document.getElementById("tab-gestion");
   const vistaRec = document.getElementById("vista-recetas");
+  const vistaStock = document.getElementById("vista-stock");
+
+  // stock view
+  const buscarStock = document.getElementById("buscar-stock");
+  const contStockResultado = document.getElementById("stock-resultado");
 
   // --- Helpers ---
   const normalize = (s) =>
@@ -81,6 +88,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.persistir = (inmediato = false) => (inmediato ? guardarAhora() : guardarDebounced());
+
+  function aplicarDefaultsProducto(p) {
+    if (p.cantidad == null) p.cantidad = 1;
+    if (p.stock == null) p.stock = 0;
+    if (!p.supermercado) p.supermercado = "Otros";
+    return p;
+  }
 
   // --- Totales avanzados (dinero + comidas + días) ---
   window.calcularTotalEstimado = function () {
@@ -163,12 +177,21 @@ document.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(() => window.scrollTo(0, y));
   }
 
+  function modificarStock(prod, delta) {
+    if (!prod) return;
+    const nuevo = Math.max(0, Number(prod.stock || 0) + delta);
+    prod.stock = nuevo;
+    actualizarTarjetaStock(prod.id, nuevo);
+    renderStockResultados();
+    persistir();
+  }
+
   // --- Data load ---
   function cargarDesdeLocalStorage() {
     try {
       const arr = JSON.parse(localStorage.getItem("productos") || "[]");
       if (Array.isArray(arr)) {
-        productos = arr;
+        productos = arr.map(aplicarDefaultsProducto);
         window.productos = productos;
         actualizarCategoriasDesdeProductos();
         renderLista();
@@ -182,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
     db.ref(rutaProductos).once("value").then((s) => {
       const data = s.val();
       if (!data) return;
-      productos = Array.isArray(data) ? data : Object.values(data);
+      productos = (Array.isArray(data) ? data : Object.values(data)).map(aplicarDefaultsProducto);
       window.productos = productos;
       actualizarCategoriasDesdeProductos();
       renderLista();
@@ -234,10 +257,52 @@ document.addEventListener("DOMContentLoaded", () => {
       porSuper.get(p.supermercado).push(p);
     }
 
+    const hayFiltroActivo = !!(filtroTexto || filtroCategoria);
+
     for (const [supermercado, arr] of porSuper) {
       const grupo = crearGrupo(supermercado);
       arr.sort((a, b) => (a.comprado - b.comprado) || a.nombre.localeCompare(b.nombre));
-      for (const p of arr) grupo.contenedor.appendChild(crearTarjetaProducto(p));
+
+      const activos = arr.filter((p) => !p.comprado);
+      const comprados = arr.filter((p) => p.comprado);
+
+      for (const p of activos) grupo.contenedor.appendChild(crearTarjetaProducto(p));
+
+      if (comprados.length) {
+        const toggle = document.createElement("button");
+        toggle.className = "btn-comprados";
+        toggle.textContent = `Comprados (${comprados.length})`;
+
+        const contComprados = document.createElement("div");
+        contComprados.className = "contenedor-tarjetas cont-comprados oculto";
+        contComprados.dataset.super = supermercado;
+
+        const renderComprados = () => {
+          contComprados.innerHTML = "";
+          comprados.forEach((p) => contComprados.appendChild(crearTarjetaProducto(p)));
+        };
+
+        const abrir = () => {
+          renderComprados();
+          contComprados.classList.remove("oculto");
+          estadoComprados[supermercado] = true;
+        };
+        const cerrar = () => {
+          contComprados.classList.add("oculto");
+          contComprados.innerHTML = "";
+          estadoComprados[supermercado] = false;
+        };
+
+        toggle.addEventListener("click", () => {
+          const abierto = contComprados.classList.contains("oculto") === false;
+          if (abierto) cerrar();
+          else abrir();
+        });
+
+        if (hayFiltroActivo || estadoComprados[supermercado]) abrir();
+
+        grupo.contenedor.append(toggle, contComprados);
+      }
     }
   };
 
@@ -307,6 +372,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
     wrapCantidad.append(btnMenos, contador, btnMas);
 
+    const chipStock = document.createElement("div");
+    chipStock.className = "chip-stock";
+
+    const btnStockMenos = document.createElement("button");
+    btnStockMenos.type = "button";
+    btnStockMenos.textContent = "–";
+    btnStockMenos.className = "chip-stock-btn";
+
+    const valorStock = document.createElement("span");
+    valorStock.className = "chip-stock-valor";
+    valorStock.textContent = prod.stock ?? 0;
+
+    const btnStockMas = document.createElement("button");
+    btnStockMas.type = "button";
+    btnStockMas.textContent = "+";
+    btnStockMas.className = "chip-stock-btn";
+
+    const etiquetaStock = document.createElement("div");
+    etiquetaStock.className = "chip-stock-label";
+    etiquetaStock.textContent = "Stock";
+
+    chipStock.append(etiquetaStock, btnStockMenos, valorStock, btnStockMas);
+
     // Gestos táctiles en contador
     let startY = null;
     contador.addEventListener(
@@ -350,6 +438,16 @@ document.addEventListener("DOMContentLoaded", () => {
       calcularTotalEstimado();
     });
 
+    btnStockMas.addEventListener("click", (e) => {
+      e.stopPropagation();
+      modificarStock(prod, 1);
+    });
+
+    btnStockMenos.addEventListener("click", (e) => {
+      e.stopPropagation();
+      modificarStock(prod, -1);
+    });
+
     checkbox.addEventListener("change", () => {
       prod.comprado = !!checkbox.checked;
       actualizarTarjetaComprado(prod.id, prod.comprado);
@@ -363,7 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
       abrirModalEdicion(prod);
     });
 
-    tarjeta.append(checkbox, imagen, wrapTexto, wrapCantidad);
+    tarjeta.append(checkbox, imagen, wrapTexto, wrapCantidad, chipStock);
     return tarjeta;
   }
 
@@ -374,6 +472,11 @@ document.addEventListener("DOMContentLoaded", () => {
   function actualizarTarjetaCantidad(id, cantidad) {
     const c = buscarTarjetaDOM(id)?.querySelector(".contador");
     if (c) c.textContent = cantidad;
+  }
+
+  function actualizarTarjetaStock(id, stock) {
+    const chip = buscarTarjetaDOM(id)?.querySelector(".chip-stock-valor");
+    if (chip) chip.textContent = stock;
   }
 
   function actualizarTarjetaComprado(id, comprado) {
@@ -626,6 +729,7 @@ document.addEventListener("DOMContentLoaded", () => {
           nombre,
           supermercado,
           cantidad: 1,
+          stock: 0,
           precio: 0,
           comprado: false,
           imagenURL: "",
@@ -663,6 +767,66 @@ document.addEventListener("DOMContentLoaded", () => {
       filtroCategoria = e.target.value || "";
       mantenerScrollDurante(() => renderLista());
     });
+
+  // --- Vista Stock ---
+  function crearCardStock(p) {
+    const card = document.createElement("div");
+    card.className = "stock-card";
+
+    const titulo = document.createElement("div");
+    titulo.className = "stock-card-titulo";
+    titulo.textContent = p.nombre;
+
+    const meta = document.createElement("div");
+    meta.className = "stock-card-meta";
+    const categoria = p.categoria ? ` · ${p.categoria}` : "";
+    meta.textContent = `${p.supermercado || "Otros"}${categoria}`;
+
+    const data = document.createElement("div");
+    data.className = "stock-card-datos";
+    data.textContent = `Precio: ${Number(p.precio || 0).toFixed(2)} € · Lista: ${p.cantidad || 1} uds`;
+
+    const controles = document.createElement("div");
+    controles.className = "stock-card-controles";
+    const btnMenos = document.createElement("button");
+    btnMenos.textContent = "–";
+    const valor = document.createElement("span");
+    valor.textContent = p.stock ?? 0;
+    const btnMas = document.createElement("button");
+    btnMas.textContent = "+";
+
+    btnMas.addEventListener("click", () => modificarStock(p, 1));
+    btnMenos.addEventListener("click", () => modificarStock(p, -1));
+
+    controles.append(btnMenos, valor, btnMas);
+    card.append(titulo, meta, data, controles);
+    return card;
+  }
+
+  function renderStockResultados() {
+    if (!contStockResultado) return;
+    contStockResultado.innerHTML = "";
+
+    const q = normalize(buscarStock?.value || "");
+    if (!q) {
+      contStockResultado.innerHTML = "<div class=\"stock-placeholder\">Escribe para buscar un producto en stock.</div>";
+      return;
+    }
+
+    const coincidencias = productos
+      .filter((p) => normalize(p.nombre).includes(q))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      .slice(0, 12);
+
+    if (!coincidencias.length) {
+      contStockResultado.innerHTML = "<div class=\"stock-placeholder\">No hay coincidencias.</div>";
+      return;
+    }
+
+    coincidencias.forEach((p) => contStockResultado.appendChild(crearCardStock(p)));
+  }
+
+  buscarStock?.addEventListener("input", debounce(renderStockResultados, 120));
 
   // --- Vista Gestión (lista editable + selección múltiple) ---
   function renderGestionLista() {
@@ -781,11 +945,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
     function activarTab(tipo) {
-    if (!tabProd || !tabRec || !tabGest) return;
+    if (!tabProd || !tabRec || !tabGest || !tabStock) return;
 
     tabProd.classList.toggle("active", tipo === "prod");
     tabRec.classList.toggle("active", tipo === "rec");
     tabGest.classList.toggle("active", tipo === "gest");
+    tabStock.classList.toggle("active", tipo === "stock");
 
     if (contenedorLista)
       contenedorLista.classList.toggle("oculto", tipo !== "prod");
@@ -793,16 +958,20 @@ document.addEventListener("DOMContentLoaded", () => {
       vistaRec.classList.toggle("oculto", tipo !== "rec");
     if (vistaGestion)
       vistaGestion.classList.toggle("oculto", tipo !== "gest");
+    if (vistaStock)
+      vistaStock.classList.toggle("oculto", tipo !== "stock");
 
     // 👇 Modo visual ligero para Gestión
     document.body.classList.toggle("modo-gestion", tipo === "gest");
 
     if (tipo === "gest") renderGestionLista();
+    if (tipo === "stock") renderStockResultados();
   }
 
   tabProd?.addEventListener("click", () => activarTab("prod"));
   tabRec?.addEventListener("click", () => activarTab("rec"));
   tabGest?.addEventListener("click", () => activarTab("gest"));
+  tabStock?.addEventListener("click", () => activarTab("stock"));
 
    // --- Init optimizado ---
   const tieneLocal = cargarDesdeLocalStorage();
