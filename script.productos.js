@@ -78,6 +78,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return Math.max(0, isNaN(num) ? 0 : num);
   };
 
+  const asegurarVisibilidadConStock = (p) => {
+    if (parseStockValor(p?.stock) > 0) {
+      p.visibleStock = true;
+    }
+  };
+
   const debounce = (fn, wait = 300) => {
     let t;
     return (...a) => {
@@ -103,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (p.stock == null) p.stock = 0;
     if (!p.supermercado) p.supermercado = "Otros";
     p.visibleStock = p.visibleStock !== false;
+    asegurarVisibilidadConStock(p);
     return p;
   }
 
@@ -191,6 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!prod) return;
     const nuevo = Math.max(0, parseStockValor(prod.stock) + delta);
     prod.stock = nuevo;
+    asegurarVisibilidadConStock(prod);
     actualizarTarjetaStock(prod.id, nuevo);
     renderStockResultados();
     renderStockResumen();
@@ -484,6 +492,7 @@ document.addEventListener("DOMContentLoaded", () => {
     inputStock.addEventListener("change", (e) => {
       const nuevo = parseStockValor(e.target.value);
       prod.stock = nuevo;
+      asegurarVisibilidadConStock(prod);
       actualizarTarjetaStock(prod.id, nuevo);
       renderStockResultados();
       renderStockResumen();
@@ -969,6 +978,7 @@ document.addEventListener("DOMContentLoaded", () => {
     inpStock.addEventListener("change", () => {
       const nuevo = parseStockValor(inpStock.value);
       p.stock = nuevo;
+      asegurarVisibilidadConStock(p);
       actualizarTarjetaStock(p.id, nuevo);
       renderStockResumen();
       renderStockResultados();
