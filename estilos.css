@@ -168,23 +168,20 @@ select:focus, input:focus{
 .btn-qty:hover{box-shadow:0 0 0 6px #5ee8ff14}
 
 .stock-field{
-  display:flex; align-items:center; gap:6px;
-  padding:6px 8px;
-  border-radius:12px;
-  background: var(--glass);
-  border:1px solid var(--stroke);
+  display:inline-flex; align-items:center; gap:6px;
+  width:auto; max-width:fit-content;
   color:var(--muted);
-  font-size:12px;
-  box-shadow:0 8px 18px rgba(0,0,0,.35);
+  font-size:10px; opacity:.7;
 }
 .stock-input{
-  width:64px;
-  padding:6px 8px;
+  width:44px; height:22px;
+  padding:0 8px;
   border-radius:10px;
   border:1px solid var(--stroke);
   background: var(--glass-2);
   color:var(--txt);
   font-weight:600;
+  font-size:12px;
   text-align:right;
   outline:none;
 }
