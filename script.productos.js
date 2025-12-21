@@ -73,6 +73,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const normalize = (s) =>
     (s || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+  const parseStockValor = (val) => {
+    const num = parseFloat((val || "").toString().replace(",", "."));
+    return Math.max(0, isNaN(num) ? 0 : num);
+  };
+
   const debounce = (fn, wait = 300) => {
     let t;
     return (...a) => {
@@ -184,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function modificarStock(prod, delta) {
     if (!prod) return;
-    const nuevo = Math.max(0, Number(prod.stock || 0) + delta);
+    const nuevo = Math.max(0, parseStockValor(prod.stock) + delta);
     prod.stock = nuevo;
     actualizarTarjetaStock(prod.id, nuevo);
     renderStockResultados();
@@ -420,6 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
     inputStock.placeholder = "0";
     inputStock.value = prod.stock ? prod.stock : "";
     inputStock.min = "0";
+    inputStock.step = "0.01";
 
     const valorStock = document.createElement("span");
     valorStock.className = "chip-stock-valor oculto";
@@ -476,7 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     inputStock.addEventListener("click", (e) => e.stopPropagation());
     inputStock.addEventListener("change", (e) => {
-      const nuevo = Math.max(0, Number(e.target.value || 0));
+      const nuevo = parseStockValor(e.target.value);
       prod.stock = nuevo;
       actualizarTarjetaStock(prod.id, nuevo);
       renderStockResultados();
@@ -488,9 +494,9 @@ document.addEventListener("DOMContentLoaded", () => {
     checkbox.addEventListener("change", () => {
       prod.comprado = !!checkbox.checked;
       actualizarTarjetaComprado(prod.id, prod.comprado);
-      reordenarTarjetaEnGrupo(prod);
       persistir();
       calcularTotalEstimado();
+      mantenerScrollDurante(() => renderLista());
     });
 
     tarjeta.addEventListener("click", (e) => {
@@ -918,9 +924,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderStockResumen() {
     if (!stockResumen) return;
     const visibles = productos.filter((p) => p.visibleStock !== false);
-    const stockProductos = visibles.filter((p) => Number(p.stock || 0) > 0);
-    const faltan = visibles.filter((p) => Number(p.stock || 0) === 0);
-    const total = visibles.length;
+    const stockProductos = productos.filter((p) => parseStockValor(p.stock) !== 0);
+    const faltan = visibles.filter((p) => parseStockValor(p.stock) === 0);
+    const total = productos.length;
 
     const crearChip = (label, cantidad, filtro) => {
       const chip = document.createElement("button");
@@ -956,11 +962,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const inpStock = document.createElement("input");
     inpStock.type = "number";
     inpStock.min = "0";
+    inpStock.step = "0.01";
     inpStock.placeholder = "0";
     inpStock.className = "stock-input";
     inpStock.value = p.stock ? p.stock : "";
     inpStock.addEventListener("change", () => {
-      const nuevo = Math.max(0, Number(inpStock.value || 0));
+      const nuevo = parseStockValor(inpStock.value);
       p.stock = nuevo;
       actualizarTarjetaStock(p.id, nuevo);
       renderStockResumen();
@@ -990,8 +997,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const visibles = productos
       .filter((p) => p.visibleStock !== false)
       .filter((p) => {
-        if (stockFiltro === "con-stock") return Number(p.stock || 0) > 0;
-        if (stockFiltro === "sin-stock") return Number(p.stock || 0) === 0;
+        if (stockFiltro === "con-stock") return parseStockValor(p.stock) > 0;
+        if (stockFiltro === "sin-stock") return parseStockValor(p.stock) === 0;
         return true;
       })
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
