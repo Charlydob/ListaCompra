@@ -295,8 +295,46 @@ select:focus, input:focus{
 
 /* ===== Stock ===== */
 .stock-toolbar{display:flex; flex-direction:column; gap:8px; margin:12px;}
+.stock-search{
+  border:1px solid var(--stroke);
+  background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  box-shadow:0 10px 28px rgba(0,0,0,.35), 0 0 0 1px rgba(94,232,255,.12) inset;
+}
+.stock-search:focus{
+  border-color:#6de3ff;
+  box-shadow:0 0 0 8px #5ee8ff12, 0 16px 32px rgba(0,0,0,.4);
+}
 .stock-hint{font-size:13px; color:var(--muted);}
 .lista-stock{display:flex; flex-direction:column; gap:10px; padding:0 12px 12px;}
+.stock-resumen{
+  margin:0 12px 8px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  background:var(--glass);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  font-weight:600;
+}
+.stock-visible-list{display:flex; flex-direction:column; gap:10px; padding:0 12px 12px;}
+.stock-visible-item{
+  display:grid;
+  grid-template-columns: 1fr 92px 110px 120px;
+  gap:8px;
+  align-items:center;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  box-shadow:0 12px 24px rgba(0,0,0,.32);
+}
+.stock-visible-item .nombre{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.stock-visible-item .stock-input{width:100%; min-width:auto; max-width:100%; height:36px; font-size:14px;}
+.stock-visible-item select{height:36px;}
+.stock-visible-item button{height:36px; padding:8px 10px; border-radius:10px; border:1px solid var(--stroke); background:var(--opal-blue); color:#031017; font-weight:700; cursor:pointer;}
+.stock-visible-item button:active{transform:translateY(1px)}
 .stock-card{
   padding:12px; border-radius:12px; border:1px solid var(--stroke);
   background: var(--glass);

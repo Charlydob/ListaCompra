@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let gruposDOM = new Map();
   let productoActual = null;
   const estadoComprados = {};
+  const headerPrincipal = document.querySelector("header");
 
   // --- DOM refs ---
   const input = document.getElementById("input-producto");
@@ -64,6 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // stock view
   const buscarStock = document.getElementById("buscar-stock");
   const contStockResultado = document.getElementById("stock-resultado");
+  const stockResumen = document.getElementById("stock-resumen");
+  const listaStockVisible = document.getElementById("stock-visibles");
 
   // --- Helpers ---
   const normalize = (s) =>
@@ -93,6 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (p.cantidad == null) p.cantidad = 1;
     if (p.stock == null) p.stock = 0;
     if (!p.supermercado) p.supermercado = "Otros";
+    p.visibleStock = p.visibleStock !== false;
     return p;
   }
 
@@ -183,6 +187,8 @@ document.addEventListener("DOMContentLoaded", () => {
     prod.stock = nuevo;
     actualizarTarjetaStock(prod.id, nuevo);
     renderStockResultados();
+    renderStockResumen();
+    renderStockVisibles();
     persistir();
   }
 
@@ -307,6 +313,9 @@ document.addEventListener("DOMContentLoaded", () => {
         grupo.contenedor.append(toggle, contComprados);
       }
     }
+
+    renderStockResumen();
+    renderStockVisibles();
   };
 
   function crearTarjetaProducto(prod) {
@@ -381,7 +390,8 @@ document.addEventListener("DOMContentLoaded", () => {
     inputStock.type = "number";
     inputStock.inputMode = "numeric";
     inputStock.className = "stock-input";
-    inputStock.value = prod.stock ?? 0;
+    inputStock.placeholder = "0";
+    inputStock.value = prod.stock ? prod.stock : "";
     inputStock.min = "0";
 
     const valorStock = document.createElement("span");
@@ -443,6 +453,8 @@ document.addEventListener("DOMContentLoaded", () => {
       prod.stock = nuevo;
       actualizarTarjetaStock(prod.id, nuevo);
       renderStockResultados();
+      renderStockResumen();
+      renderStockVisibles();
       persistir();
     });
 
@@ -478,7 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const chip = tarjeta.querySelector(".chip-stock-valor");
     const input = tarjeta.querySelector(".stock-input");
     if (chip) chip.textContent = stock;
-    if (input) input.value = stock;
+    if (input) input.value = stock ? stock : "";
   }
 
   function actualizarTarjetaComprado(id, comprado) {
@@ -732,6 +744,7 @@ document.addEventListener("DOMContentLoaded", () => {
           supermercado,
           cantidad: 1,
           stock: 0,
+          visibleStock: true,
           precio: 0,
           comprado: false,
           imagenURL: "",
@@ -755,7 +768,11 @@ document.addEventListener("DOMContentLoaded", () => {
         persistir(true);
         calcularTotalEstimado();
       }
+      filtroTexto = "";
       input.value = "";
+      renderLista();
+      renderStockVisibles();
+      renderStockResumen();
     });
 
   if (input)
@@ -801,7 +818,34 @@ document.addEventListener("DOMContentLoaded", () => {
     btnMenos.addEventListener("click", () => modificarStock(p, -1));
 
     controles.append(btnMenos, valor, btnMas);
-    card.append(titulo, meta, data, controles);
+
+    const visibilidad = document.createElement("select");
+    visibilidad.innerHTML = `
+      <option value="visible">Visible</option>
+      <option value="oculto">Oculto</option>
+    `;
+    visibilidad.value = p.visibleStock === false ? "oculto" : "visible";
+    visibilidad.addEventListener("change", () => {
+      p.visibleStock = visibilidad.value === "visible";
+      renderStockVisibles();
+      renderStockResumen();
+      persistir();
+    });
+
+    const btnALista = document.createElement("button");
+    btnALista.textContent = "Añadir a lista";
+    btnALista.addEventListener("click", () => {
+      p.comprado = false;
+      actualizarTarjetaComprado(p.id, false);
+      renderLista();
+      persistir();
+    });
+
+    const filaExtra = document.createElement("div");
+    filaExtra.className = "stock-card-controles";
+    filaExtra.append(visibilidad, btnALista);
+
+    card.append(titulo, meta, data, controles, filaExtra);
     return card;
   }
 
@@ -829,6 +873,82 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   buscarStock?.addEventListener("input", debounce(renderStockResultados, 120));
+
+  function renderStockResumen() {
+    if (!stockResumen) return;
+    const totalUnidades = productos.reduce((acc, p) => acc + Number(p.stock || 0), 0);
+    const visibles = productos.filter((p) => p.visibleStock !== false).length;
+    const ocultos = productos.length - visibles;
+    stockResumen.textContent = `Unidades en stock: ${totalUnidades} · Visibles: ${visibles} · Ocultos: ${ocultos}`;
+  }
+
+  function crearItemVisible(p) {
+    const fila = document.createElement("div");
+    fila.className = "stock-visible-item";
+
+    const nombre = document.createElement("div");
+    nombre.className = "nombre";
+    nombre.textContent = p.nombre;
+
+    const inpStock = document.createElement("input");
+    inpStock.type = "number";
+    inpStock.min = "0";
+    inpStock.placeholder = "0";
+    inpStock.className = "stock-input";
+    inpStock.value = p.stock ? p.stock : "";
+    inpStock.addEventListener("change", () => {
+      const nuevo = Math.max(0, Number(inpStock.value || 0));
+      p.stock = nuevo;
+      actualizarTarjetaStock(p.id, nuevo);
+      renderStockResumen();
+      renderStockResultados();
+      persistir();
+    });
+
+    const selVisible = document.createElement("select");
+    selVisible.innerHTML = `
+      <option value="visible">Visible</option>
+      <option value="oculto">Oculto</option>
+    `;
+    selVisible.value = p.visibleStock === false ? "oculto" : "visible";
+    selVisible.addEventListener("change", () => {
+      p.visibleStock = selVisible.value === "visible";
+      renderStockVisibles();
+      renderStockResumen();
+      renderStockResultados();
+      persistir();
+    });
+
+    const btnLista = document.createElement("button");
+    btnLista.textContent = "Añadir a lista";
+    btnLista.addEventListener("click", () => {
+      p.comprado = false;
+      actualizarTarjetaComprado(p.id, false);
+      renderLista();
+      persistir();
+    });
+
+    fila.append(nombre, inpStock, selVisible, btnLista);
+    return fila;
+  }
+
+  function renderStockVisibles() {
+    if (!listaStockVisible) return;
+    listaStockVisible.innerHTML = "";
+    const visibles = productos
+      .filter((p) => p.visibleStock !== false)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    if (!visibles.length) {
+      const vacio = document.createElement("div");
+      vacio.className = "stock-placeholder";
+      vacio.textContent = "Marca productos como visibles para gestionarlos aquí.";
+      listaStockVisible.appendChild(vacio);
+      return;
+    }
+
+    visibles.forEach((p) => listaStockVisible.appendChild(crearItemVisible(p)));
+  }
 
   // --- Vista Gestión (lista editable + selección múltiple) ---
   function renderGestionLista() {
@@ -954,6 +1074,9 @@ document.addEventListener("DOMContentLoaded", () => {
     tabGest.classList.toggle("active", tipo === "gest");
     tabStock.classList.toggle("active", tipo === "stock");
 
+    if (headerPrincipal)
+      headerPrincipal.classList.toggle("oculto", tipo === "stock");
+
     if (contenedorLista)
       contenedorLista.classList.toggle("oculto", tipo !== "prod");
     if (vistaRec)
@@ -967,7 +1090,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.toggle("modo-gestion", tipo === "gest");
 
     if (tipo === "gest") renderGestionLista();
-    if (tipo === "stock") renderStockResultados();
+    if (tipo === "stock") {
+      renderStockResumen();
+      renderStockVisibles();
+      renderStockResultados();
+    }
   }
 
   tabProd?.addEventListener("click", () => activarTab("prod"));
@@ -983,4 +1110,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   // cuando llegue Firebase, sobreescribe y re-renderiza una vez
   cargarDesdeFirebase();
+  renderStockResumen();
+  renderStockVisibles();
 });
