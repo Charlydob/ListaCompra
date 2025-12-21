@@ -321,19 +321,21 @@ select:focus, input:focus{
 .stock-visible-list{display:flex; flex-direction:column; gap:10px; padding:0 12px 12px;}
 .stock-visible-item{
   display:grid;
-  grid-template-columns: 1fr 92px 110px 120px;
-  gap:8px;
+  grid-template-columns: 1fr 40px 100px auto;
+  gap:10px;
   align-items:center;
-  padding:10px 12px;
+  min-height:48px;
+  padding:8px 10px;
   border-radius:12px;
   border:1px solid var(--stroke);
   background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
   box-shadow:0 12px 24px rgba(0,0,0,.32);
+  font-size:13px;
 }
-.stock-visible-item .nombre{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.stock-visible-item .stock-input{width:100%; min-width:auto; max-width:100%; height:36px; font-size:14px;}
-.stock-visible-item select{height:36px;}
-.stock-visible-item button{height:36px; padding:8px 10px; border-radius:10px; border:1px solid var(--stroke); background:var(--opal-blue); color:#031017; font-weight:700; cursor:pointer;}
+.stock-visible-item .stock-nombre{font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.stock-visible-item .stock-input{width:40px; min-width:40px; max-width:40px; height:36px; font-size:13px; padding:0 6px; text-align:right; border-radius:10px;}
+.stock-visible-item select{width:100px; min-width:90px; max-width:110px; height:36px; font-size:13px;}
+.stock-visible-item button{height:36px; padding:8px 10px; border-radius:10px; border:1px solid var(--stroke); background:var(--opal-blue); color:#031017; font-weight:700; cursor:pointer; font-size:13px;}
 .stock-visible-item button:active{transform:translateY(1px)}
 .stock-card{
   padding:12px; border-radius:12px; border:1px solid var(--stroke);
