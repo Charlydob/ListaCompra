@@ -86,6 +86,13 @@ select:focus, input:focus{
   box-shadow:0 0 0 6px #5ee8ff16, 0 10px 24px #0006;
   transform: translateY(-1px);
 }
+#input-producto{
+  background: linear-gradient(145deg, rgba(94,232,255,.08), rgba(255,255,255,.03));
+  color:#f7fbff;
+  font-weight:650;
+  letter-spacing:.15px;
+}
+#input-producto::placeholder{color:#c5e7ff; opacity:.9;}
 
 #btn-agregar{
   width:100%;
@@ -176,6 +183,21 @@ select:focus, input:focus{
 }
 .btn-qty:active{transform:translateY(1px)}
 .btn-qty:hover{box-shadow:0 0 0 6px #5ee8ff14}
+
+.busqueda-destacada{
+  padding:10px 12px 6px;
+  border-radius:16px;
+  border:1px solid var(--stroke);
+  background:linear-gradient(180deg, rgba(94,232,255,.08), rgba(255,255,255,.03));
+  box-shadow:0 16px 32px rgba(0,0,0,.32);
+}
+.busqueda-destacada .tarjeta-producto{margin-top:6px; box-shadow:0 14px 28px rgba(0,0,0,.34)}
+.busqueda-destacada-label{
+  font-size:13px;
+  letter-spacing:.3px;
+  color:var(--muted);
+  text-transform:uppercase;
+}
 
 .stock-field{
   display:inline-flex; align-items:center; justify-content:flex-end; gap:6px;
@@ -317,7 +339,25 @@ select:focus, input:focus{
   justify-content:space-between;
   gap:10px;
   font-weight:600;
+  flex-wrap:wrap;
 }
+.stock-chip{
+  padding:8px 12px;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  background: linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+  color:var(--txt);
+  cursor:pointer;
+  font-weight:700;
+  letter-spacing:.2px;
+  transition: transform .06s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.stock-chip.activo{
+  border-color: var(--opal-cyan);
+  box-shadow:0 0 0 8px #5ee8ff12, 0 14px 28px rgba(0,0,0,.28);
+  transform: translateY(-1px);
+}
+.stock-chip:active{transform:translateY(1px)}
 .stock-visible-list{display:flex; flex-direction:column; gap:10px; padding:0 12px 12px;}
 .stock-visible-item{
   display:grid;

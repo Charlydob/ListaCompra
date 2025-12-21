@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let categorias = [];
   let filtroTexto = "";
   let filtroCategoria = "";
+  let stockFiltro = "todos";
   let gruposDOM = new Map();
   let productoActual = null;
   const estadoComprados = {};
@@ -251,13 +252,39 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   }
 
+  function crearDestacadoBusqueda(p) {
+    const wrap = document.createElement("div");
+    wrap.className = "busqueda-destacada";
+
+    const etiqueta = document.createElement("div");
+    etiqueta.className = "busqueda-destacada-label";
+    etiqueta.textContent = "Coincidencia encontrada";
+
+    wrap.append(etiqueta, crearTarjetaProducto(p));
+    return wrap;
+  }
+
   window.renderLista = function () {
     if (!contenedorLista) return;
     calcularTotalEstimado();
     limpiarGrupos();
 
+    let destacadoId = null;
+
+    if (filtroTexto) {
+      const candidato = productos
+        .filter((p) => pasaFiltros(p))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))[0];
+
+      if (candidato) {
+        destacadoId = candidato.id;
+        contenedorLista.appendChild(crearDestacadoBusqueda(candidato));
+      }
+    }
+
     const porSuper = new Map();
     for (const p of productos) {
+      if (destacadoId && p.id === destacadoId) continue;
       if (!pasaFiltros(p)) continue;
       if (!porSuper.has(p.supermercado)) porSuper.set(p.supermercado, []);
       porSuper.get(p.supermercado).push(p);
@@ -891,11 +918,31 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderStockResumen() {
     if (!stockResumen) return;
     const visibles = productos.filter((p) => p.visibleStock !== false);
-    const stockProductos = productos.filter((p) => Number(p.stock || 0) > 0);
+    const stockProductos = visibles.filter((p) => Number(p.stock || 0) > 0);
     const faltan = visibles.filter((p) => Number(p.stock || 0) === 0);
-    const total = productos.length;
+    const total = visibles.length;
 
-    stockResumen.textContent = `Stock: ${stockProductos.length} | Falta: ${faltan.length} | Total: ${total}`;
+    const crearChip = (label, cantidad, filtro) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "stock-chip";
+      chip.dataset.filtro = filtro;
+      if (stockFiltro === filtro) chip.classList.add("activo");
+      chip.textContent = `${label}: ${cantidad}`;
+      chip.addEventListener("click", () => {
+        stockFiltro = filtro;
+        renderStockResumen();
+        renderStockVisibles();
+      });
+      return chip;
+    };
+
+    stockResumen.innerHTML = "";
+    stockResumen.append(
+      crearChip("Stock", stockProductos.length, "con-stock"),
+      crearChip("Falta", faltan.length, "sin-stock"),
+      crearChip("Total", total, "todos")
+    );
   }
 
   function crearItemVisible(p) {
@@ -942,6 +989,11 @@ document.addEventListener("DOMContentLoaded", () => {
     listaStockVisible.innerHTML = "";
     const visibles = productos
       .filter((p) => p.visibleStock !== false)
+      .filter((p) => {
+        if (stockFiltro === "con-stock") return Number(p.stock || 0) > 0;
+        if (stockFiltro === "sin-stock") return Number(p.stock || 0) === 0;
+        return true;
+      })
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     if (!visibles.length) {
