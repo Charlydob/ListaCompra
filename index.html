@@ -35,6 +35,7 @@
 <div id="tabs-recetas" style="display:flex;gap:8px;margin:10px 12px 0;">
   <button id="tab-productos" class="tab-soft active">Productos</button>
   <button id="tab-recetas" class="tab-soft">Recetas</button>
+  <button id="tab-stock" class="tab-soft">Stock</button>
   <button id="tab-gestion" class="tab-soft">Gestión</button>
 </div>
 
@@ -109,6 +110,15 @@
 
   <div id="lista-gestion"></div>
 </section>
+
+    <!-- Vista Stock (buscador ligero) -->
+    <section id="vista-stock" class="oculto">
+      <div class="stock-toolbar">
+        <input id="buscar-stock" placeholder="Buscar producto por nombre" />
+        <div class="stock-hint">Los productos se crean aquí al añadirlos a la lista.</div>
+      </div>
+      <div id="stock-resultado" class="lista-stock"></div>
+    </section>
   </div>
 
   <!-- Modal edición de producto (tuyo, intacto) -->
