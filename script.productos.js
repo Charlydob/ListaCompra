@@ -770,7 +770,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const syncEstado = () => {
       const visible = p.visibleStock !== false;
-      btn.textContent = visible ? "⏷" : "⏵";
+      btn.textContent = visible ? "🚫" : "👁️";
       btn.title = visible ? "Visible en stock" : "Oculto en stock";
       btn.ariaLabel = btn.title;
     };
@@ -898,7 +898,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const filaExtra = document.createElement("div");
-    filaExtra.className = "stock-card-controles";
+    filaExtra.className = "stock-card-controles-busqueda";
     filaExtra.append(visibilidad, btnALista);
 
     card.append(titulo, meta, data, controles, filaExtra);
