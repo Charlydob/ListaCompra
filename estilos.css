@@ -1108,3 +1108,17 @@ body.modo-gestion .gestion-row select{
 .stock-card-meta{ grid-area:meta; justify-self:end; }
 .stock-card-controles{ grid-area:ctrl; justify-self:end; }
 #tab-recetas{display: none;}
+.stock-card-meta{
+  grid-area: meta;
+  justify-self: end;
+
+  font-size:13px;
+  color:var(--muted);
+
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 80px;
+}
