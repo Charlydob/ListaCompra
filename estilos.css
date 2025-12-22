@@ -398,7 +398,16 @@ select:focus, input:focus{
   gap:6px;
   height: 70px;
 }
-.stock-card-titulo{font-weight:700; font-size:16px;}
+
+
+.stock-card-titulo{
+  font-weight:700;
+  font-size:16px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+}
 .stock-card-meta{font-size:13px; color:var(--muted);}
 .stock-card-datos{font-size:13px; color:var(--txt); opacity:.9;}
 .stock-card-controles{display:flex; align-items:end; gap:8px;}
