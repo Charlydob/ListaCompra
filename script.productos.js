@@ -48,18 +48,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const filtroCatSel = document.getElementById("filtro-categoria");
 
   // vista gestión
-  const vistaGestion = document.getElementById("vista-gestion");
-  const listaGestion = document.getElementById("lista-gestion");
-  const bulkPrecio = document.getElementById("bulk-precio");
-  const bulkComidas = document.getElementById("bulk-comidas");
-  const bulkPara = document.getElementById("bulk-para");
-  const btnBulkAplicar = document.getElementById("btn-bulk-aplicar");
 
   // tabs
   const tabProd = document.getElementById("tab-productos");
   const tabRec = document.getElementById("tab-recetas");
   const tabStock = document.getElementById("tab-stock");
-  const tabGest = document.getElementById("tab-gestion");
   const vistaRec = document.getElementById("vista-recetas");
   const vistaStock = document.getElementById("vista-stock");
 
@@ -104,25 +97,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.persistir = (inmediato = false) => (inmediato ? guardarAhora() : guardarDebounced());
 
-function aplicarDefaultsProducto(p) {
-  if (p.cantidad == null) p.cantidad = 1;
-  if (p.stock == null) p.stock = 0;
-  if (!p.supermercado) p.supermercado = "Otros";
-
-  // ya existe en tu app
-  if (p.comidas == null) p.comidas = 0;
-
-  // NUEVO (stock inteligente)
-  if (p.stockGrupo == null) p.stockGrupo = "";      // "", base, prot, verd, extra
-  if (p.stockPorComida == null) p.stockPorComida = 1; // divisor (si algo “cuenta” media)
-  if (p.stockMin == null) p.stockMin = null;        // null = sin umbral
-  if (p.autoAddLow == null) p.autoAddLow = false;   // auto añadir a lista
-
-  p.visibleStock = p.visibleStock !== false;
-  asegurarVisibilidadConStock(p);
-  return p;
-}
-
+  function aplicarDefaultsProducto(p) {
+    if (p.cantidad == null) p.cantidad = 1;
+    if (p.stock == null) p.stock = 0;
+    if (!p.supermercado) p.supermercado = "Otros";
+    p.visibleStock = p.visibleStock !== false;
+    asegurarVisibilidadConStock(p);
+    return p;
+  }
 
   // --- Totales avanzados (dinero + comidas + días) ---
   window.calcularTotalEstimado = function () {
@@ -525,52 +507,12 @@ function aplicarDefaultsProducto(p) {
     });
 
     tarjeta.append(checkbox, imagen, wrapTexto, contDerecha);
-aplicarLowClassEnTarjetaProd(prod);
-
-
     return tarjeta;
   }
 
   function buscarTarjetaDOM(id) {
     return contenedorLista.querySelector(`.tarjeta-producto[data-id="${id}"]`);
   }
-function getStockMin(p) {
-  const t = Number(p?.stockMin);
-  return Number.isFinite(t) && t > 0 ? t : null;
-}
-function isLowStock(p) {
-  const t = getStockMin(p);
-  if (!t) return false;
-  return parseStockValor(p.stock) <= t;
-}
-function aplicarLowClassEnTarjetaProd(p) {
-  const card = buscarTarjetaDOM(p.id);
-  if (card) card.classList.toggle("low-stock", isLowStock(p));
-}
-function autoAddSiBajo(p) {
-  if (!p?.autoAddLow) return false;
-  if (!isLowStock(p)) return false;
-  if (p.comprado) {
-    p.comprado = false;
-    actualizarTarjetaComprado(p.id, false);
-    return true;
-  }
-  return false;
-}
-
-// exports para stock.js
-window.lc_isLowStock = isLowStock;
-window.lc_getStockMin = getStockMin;
-window.lc_applyLowStockToProductCard = aplicarLowClassEnTarjetaProd;
-window.lc_autoAddIfLow = (p) => {
-  const changed = autoAddSiBajo(p);
-  if (changed) {
-    calcularTotalEstimado();
-    mantenerScrollDurante(() => renderLista());
-    persistir();
-  }
-  return changed;
-};
 
   function actualizarTarjetaCantidad(id, cantidad) {
     const c = buscarTarjetaDOM(id)?.querySelector(".contador");
@@ -584,16 +526,6 @@ window.lc_autoAddIfLow = (p) => {
     const input = tarjeta.querySelector(".stock-input");
     if (chip) chip.textContent = stock;
     if (input) input.value = stock ? stock : "";
-      const prod = productos.find((p) => p.id === id);
-  if (prod) {
-    tarjeta.classList.toggle("low-stock", isLowStock(prod));
-    if (autoAddSiBajo(prod)) {
-      calcularTotalEstimado();
-      mantenerScrollDurante(() => renderLista());
-      persistir();
-    }
-  }
-
   }
 
   function actualizarTarjetaComprado(id, comprado) {
@@ -603,9 +535,6 @@ window.lc_autoAddIfLow = (p) => {
     const chk = card.querySelector(".checkbox");
     if (chk) chk.checked = !!comprado;
   }
-// Exports para el módulo Stock
-window.lc_updateTarjetaStock = actualizarTarjetaStock;
-window.lc_updateTarjetaComprado = actualizarTarjetaComprado;
 
   function reordenarTarjetaEnGrupo(prod) {
     const card = buscarTarjetaDOM(prod.id);
@@ -882,11 +811,7 @@ window.lc_updateTarjetaComprado = actualizarTarjetaComprado;
           unidadBase: "ud",
           gramosPorUnidad: 0,
           comidas: 0,
-          para: "ambos",
-          stockGrupo: "",
-          stockPorComida: 1,
-          stockMin: null,
-          autoAddLow: false
+          para: "ambos"
         };
         productos.push(nuevo);
         window.productos = productos;
@@ -922,99 +847,177 @@ window.lc_updateTarjetaComprado = actualizarTarjetaComprado;
     });
 
   // --- Vista Stock ---
-// --- Vista Stock (stubs: implementación en script.stock.js) ---
-function renderStockResultados() { window.StockTab?.renderStockResultados?.(); }
-function renderStockResumen()    { window.StockTab?.renderStockResumen?.(); }
-function renderStockVisibles()   { window.StockTab?.renderStockVisibles?.(); }
+  function crearCardStock(p) {
+    const card = document.createElement("div");
+    card.className = "stock-card";
 
+    const titulo = document.createElement("div");
+    titulo.className = "stock-card-titulo";
+    titulo.textContent = p.nombre;
+
+    const meta = document.createElement("div");
+    meta.className = "stock-card-meta";
+    const categoria = p.categoria ? ` · ${p.categoria}` : "";
+    meta.textContent = `${p.supermercado || "Otros"}${categoria}`;
+
+    const data = document.createElement("div");
+    data.className = "stock-card-datos";
+    data.textContent = `Precio: ${Number(p.precio || 0).toFixed(2)} € · Lista: ${p.cantidad || 1} uds`;
+
+    const controles = document.createElement("div");
+    controles.className = "stock-card-controles";
+    const btnMenos = document.createElement("button");
+    btnMenos.textContent = "–";
+    const valor = document.createElement("span");
+    valor.textContent = p.stock ?? 0;
+    const btnMas = document.createElement("button");
+    btnMas.textContent = "+";
+
+    btnMas.addEventListener("click", () => modificarStock(p, 1));
+    btnMenos.addEventListener("click", () => modificarStock(p, -1));
+
+    controles.append(btnMenos, valor, btnMas);
+
+    const visibilidad = crearToggleVisibilidad(p);
+
+    const btnALista = document.createElement("button");
+    btnALista.className = "stock-add-btn";
+    btnALista.textContent = "🛒";
+    btnALista.addEventListener("click", () => {
+      p.comprado = false;
+      actualizarTarjetaComprado(p.id, false);
+      renderLista();
+      persistir();
+    });
+
+    const filaExtra = document.createElement("div");
+    filaExtra.className = "stock-card-controles-busqueda";
+    filaExtra.append(visibilidad, btnALista);
+
+    card.append(titulo, meta, data, controles, filaExtra);
+    return card;
+  }
+
+  function renderStockResultados() {
+    if (!contStockResultado) return;
+    contStockResultado.innerHTML = "";
+
+    const q = normalize(buscarStock?.value || "");
+    if (!q) {
+      contStockResultado.innerHTML = "<div class=\"stock-placeholder\">Escribe para buscar un producto en stock.</div>";
+      return;
+    }
+
+    const coincidencias = productos
+      .filter((p) => normalize(p.nombre).includes(q))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      .slice(0, 12);
+
+    if (!coincidencias.length) {
+      contStockResultado.innerHTML = "<div class=\"stock-placeholder\">No hay coincidencias.</div>";
+      return;
+    }
+
+    coincidencias.forEach((p) => contStockResultado.appendChild(crearCardStock(p)));
+  }
+
+  buscarStock?.addEventListener("input", debounce(renderStockResultados, 120));
+
+  function renderStockResumen() {
+    if (!stockResumen) return;
+    const visibles = productos.filter((p) => p.visibleStock !== false);
+    const stockProductos = productos.filter((p) => parseStockValor(p.stock) !== 0);
+    const faltan = visibles.filter((p) => parseStockValor(p.stock) === 0);
+    const total = productos.length;
+
+    const crearChip = (label, cantidad, filtro) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "stock-chip";
+      chip.dataset.filtro = filtro;
+      if (stockFiltro === filtro) chip.classList.add("activo");
+      chip.textContent = `${label}: ${cantidad}`;
+      chip.addEventListener("click", () => {
+        stockFiltro = filtro;
+        renderStockResumen();
+        renderStockVisibles();
+      });
+      return chip;
+    };
+
+    stockResumen.innerHTML = "";
+    stockResumen.append(
+      crearChip("Stock", stockProductos.length, "con-stock"),
+      crearChip("Falta", faltan.length, "sin-stock"),
+      crearChip("Total", total, "todos")
+    );
+  }
+
+  function crearItemVisible(p) {
+    const fila = document.createElement("div");
+    fila.className = "stock-visible-item";
+
+    const nombre = document.createElement("div");
+    nombre.className = "stock-nombre";
+    nombre.textContent = p.nombre;
+
+    const inpStock = document.createElement("input");
+    inpStock.type = "number";
+    inpStock.min = "0";
+    inpStock.step = "0.01";
+    inpStock.placeholder = "0";
+    inpStock.className = "stock-input";
+    inpStock.value = p.stock ? p.stock : "";
+    inpStock.addEventListener("change", () => {
+      const nuevo = parseStockValor(inpStock.value);
+      p.stock = nuevo;
+      asegurarVisibilidadConStock(p);
+      actualizarTarjetaStock(p.id, nuevo);
+      renderStockResumen();
+      renderStockResultados();
+      persistir();
+    });
+
+    const selVisible = crearToggleVisibilidad(p);
+
+    const btnLista = document.createElement("button");
+    btnLista.className = "stock-add-btn";
+    btnLista.textContent = "🛒";
+    btnLista.addEventListener("click", () => {
+      p.comprado = false;
+      actualizarTarjetaComprado(p.id, false);
+      renderLista();
+      persistir();
+    });
+
+    fila.append(nombre, inpStock, selVisible, btnLista);
+    return fila;
+  }
+
+  function renderStockVisibles() {
+    if (!listaStockVisible) return;
+    listaStockVisible.innerHTML = "";
+    const visibles = productos
+      .filter((p) => p.visibleStock !== false)
+      .filter((p) => {
+        if (stockFiltro === "con-stock") return parseStockValor(p.stock) > 0;
+        if (stockFiltro === "sin-stock") return parseStockValor(p.stock) === 0;
+        return true;
+      })
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    if (!visibles.length) {
+      const vacio = document.createElement("div");
+      vacio.className = "stock-placeholder";
+      vacio.textContent = "Marca productos como visibles para gestionarlos aquí.";
+      listaStockVisible.appendChild(vacio);
+      return;
+    }
+
+    visibles.forEach((p) => listaStockVisible.appendChild(crearItemVisible(p)));
+  }
 
   // --- Vista Gestión (lista editable + selección múltiple) ---
-  function renderGestionLista() {
-    if (!listaGestion) return;
-    listaGestion.innerHTML = "";
-
-    const orden = [...productos].sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-    for (const p of orden) {
-      const row = document.createElement("div");
-      row.className = "gestion-row";
-      row.dataset.id = p.id;
-
-      const chkSel = document.createElement("input");
-      chkSel.type = "checkbox";
-      chkSel.className = "gestion-bulk";
-
-      const inpNombre = document.createElement("input");
-      inpNombre.type = "text";
-      inpNombre.value = p.nombre || "";
-
-      const inpPrecio = document.createElement("input");
-      inpPrecio.type = "number";
-      inpPrecio.step = "0.01";
-      inpPrecio.value = p.precio || 0;
-
-      const inpComidas = document.createElement("input");
-      inpComidas.type = "number";
-      inpComidas.step = "1";
-      inpComidas.min = "0";
-      inpComidas.value = p.comidas || 0;
-
-      const selPara = document.createElement("select");
-      selPara.innerHTML = `
-        <option value="ambos">Ambos</option>
-        <option value="charly">Charly</option>
-        <option value="laura">Laura</option>
-      `;
-      selPara.value = (p.para || "ambos").toLowerCase();
-
-      const chkComprado = document.createElement("input");
-      chkComprado.type = "checkbox";
-      chkComprado.checked = !!p.comprado;
-
-      // listeners individuales
-      inpNombre.addEventListener("change", () => {
-        p.nombre = inpNombre.value.trim();
-        persistir();
-        renderLista();
-      });
-
-      inpPrecio.addEventListener("change", () => {
-        p.precio = Number(inpPrecio.value || 0);
-        persistir();
-        calcularTotalEstimado();
-      });
-
-      inpComidas.addEventListener("change", () => {
-        p.comidas = Number(inpComidas.value || 0);
-        persistir();
-        calcularTotalEstimado();
-      });
-
-      selPara.addEventListener("change", () => {
-        p.para = selPara.value;
-        persistir();
-        calcularTotalEstimado();
-      });
-
-      chkComprado.addEventListener("change", () => {
-        p.comprado = chkComprado.checked;
-        actualizarTarjetaComprado(p.id, p.comprado);
-        persistir();
-        calcularTotalEstimado();
-      });
-
-      row.append(
-        chkSel,
-        inpNombre,
-        inpPrecio,
-        inpComidas,
-        selPara,
-        chkComprado
-      );
-
-      listaGestion.appendChild(row);
-    }
-  }
 
   if (btnBulkAplicar && listaGestion) {
     btnBulkAplicar.addEventListener("click", () => {
@@ -1040,54 +1043,60 @@ function renderStockVisibles()   { window.StockTab?.renderStockVisibles?.(); }
       persistir(true);
       calcularTotalEstimado();
       renderLista();
-      renderGestionLista();
     });
   }
 
-    function activarTab(tipo) {
-    if (!tabProd || !tabRec || !tabGest || !tabStock) return;
+  function activarTab(tipo) {
+    // tabs
+    const tabProd = document.getElementById("tab-productos");
+    const tabRec  = document.getElementById("tab-recetas");
+    const tabStock= document.getElementById("tab-stock");
+    const vistaProd = document.getElementById("vista-productos");
+    const vistaRec  = document.getElementById("vista-recetas");
+    const vistaStock= document.getElementById("vista-stock");
 
-    tabProd.classList.toggle("active", tipo === "prod");
-    tabRec.classList.toggle("active", tipo === "rec");
-    tabGest.classList.toggle("active", tipo === "gest");
-    tabStock.classList.toggle("active", tipo === "stock");
+    tabProd && tabProd.classList.toggle("active", tipo === "prod");
+    tabRec  && tabRec.classList.toggle("active", tipo === "rec");
+    tabStock&& tabStock.classList.toggle("active", tipo === "stock");
 
-    if (headerPrincipal)
-      headerPrincipal.classList.toggle("oculto", tipo === "stock");
+    vistaProd && vistaProd.classList.toggle("oculto", tipo !== "prod");
+    vistaRec  && vistaRec.classList.toggle("oculto", tipo !== "rec");
+    vistaStock&& vistaStock.classList.toggle("oculto", tipo !== "stock");
 
-    if (contenedorLista)
-      contenedorLista.classList.toggle("oculto", tipo !== "prod");
-    if (vistaRec)
-      vistaRec.classList.toggle("oculto", tipo !== "rec");
-    if (vistaGestion)
-      vistaGestion.classList.toggle("oculto", tipo !== "gest");
-    if (vistaStock)
-      vistaStock.classList.toggle("oculto", tipo !== "stock");
-
-    // 👇 Modo visual ligero para Gestión
-    document.body.classList.toggle("modo-gestion", tipo === "gest");
-
-    if (tipo === "gest") renderGestionLista();
     if (tipo === "stock") {
-      renderStockResumen();
-      renderStockVisibles();
-      renderStockResultados();
+      window.StockTab?.renderAll?.();
     }
   }
 
   tabProd?.addEventListener("click", () => activarTab("prod"));
   tabRec?.addEventListener("click", () => activarTab("rec"));
-  tabGest?.addEventListener("click", () => activarTab("gest"));
   tabStock?.addEventListener("click", () => activarTab("stock"));
 
+  // --- Botón volver arriba ---
+  const btnTop = document.getElementById("btn-top");
+  if (btnTop) {
+    const toggleTop = () => btnTop.classList.toggle("oculto", window.scrollY < 700);
+    window.addEventListener("scroll", toggleTop, { passive: true });
+    toggleTop();
+    btnTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+  }
    // --- Init optimizado ---
-  const tieneLocal = cargarDesdeLocalStorage();
+  const tieneLocal = (typeof cargarDesdeLocalStorage === "function") ? cargarDesdeLocalStorage() : false;
   if (!tieneLocal) {
     // si no hay datos aún, al menos actualiza cabecera vacía
     calcularTotalEstimado();
   }
   // cuando llegue Firebase, sobreescribe y re-renderiza una vez
   cargarDesdeFirebase();
-  renderStockResumen();
-  renderStockVisibles();
+  // refresca Stock si está montado
+  window.StockTab?.renderAll?.();
 });
+
+  // --- Exports para StockTab ---
+  window.lc_openProductModal = (pOrId) => {
+    const p = typeof pOrId === "string" ? (productos || []).find(x => x.id === pOrId) : pOrId;
+    if (!p) return;
+    abrirModalEdicion(p);
+  };
+  window.lc_updateTarjetaStock = actualizarTarjetaStock;
+  window.lc_updateTarjetaComprado = actualizarTarjetaComprado;

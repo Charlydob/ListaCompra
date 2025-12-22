@@ -1122,3 +1122,22 @@ body.modo-gestion .gestion-row select{
   min-width: 0;
   max-width: 80px;
 }
+
+
+/* ===== Botón volver arriba ===== */
+.btn-top{
+  position:fixed;
+  right:14px;
+  bottom:16px;
+  z-index:9999;
+  width:46px;
+  height:46px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  color: var(--txt);
+  box-shadow: 0 18px 34px rgba(0,0,0,.40), 0 0 0 1px rgba(94,232,255,.08) inset;
+  cursor:pointer;
+  font-size:18px;
+}
+.btn-top:active{transform:translateY(1px)}

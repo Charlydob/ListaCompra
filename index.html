@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Lista de la Compra</title>
   <link rel="stylesheet" href="estilos.css" />
-  <link rel="stylesheet" href="stock.css" />
-
   <link rel="apple-touch-icon" href="icono.png">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4590ff" media="(prefers-color-scheme: light)">
@@ -38,10 +36,10 @@
   <button id="tab-productos" class="tab-soft active">Productos</button>
   <button id="tab-recetas" class="tab-soft">Recetas</button>
   <button id="tab-stock" class="tab-soft">Stock</button>
-  <button id="tab-gestion" class="tab-soft">Gestión</button>
 </div>
 
     <!-- Vista Productos (tu layout intacto) -->
+<section id="vista-productos">
 <header>
   <div id="total-estimado" style="font-weight: bold; font-size: 18px; margin-bottom: 4px;">
     Total compra: 0,00 €
@@ -75,6 +73,7 @@
     <section id="lista-productos"></section>
 
     <!-- Vista Recetas (nueva pestaña) -->
+</section>
     <section id="vista-recetas" class="oculto">
       <div class="recetas-toolbar" style="display:flex;gap:8px;align-items:center;margin:10px 12px;">
         <input id="buscar-recetas" placeholder="Buscar receta..." style="flex:1" />
@@ -83,35 +82,6 @@
       <div id="lista-recetas" class="lista" style="padding:0 12px 12px;"></div>
     </section>
 <!-- Vista Gestión (nueva pestaña) -->
-<section id="vista-gestion" class="oculto">
-  <div class="gestion-toolbar">
-    <div class="gestion-bulk-row">
-      <input id="bulk-precio" type="number" step="0.01" placeholder="Precio €" />
-      <input id="bulk-comidas" type="number" step="1" min="0" placeholder="Comidas/pack" />
-      <select id="bulk-para">
-        <option value="">Para…</option>
-        <option value="ambos">Ambos</option>
-        <option value="charly">Charly</option>
-        <option value="laura">Laura</option>
-      </select>
-      <button id="btn-bulk-aplicar">Aplicar</button>
-    </div>
-    <div class="gestion-hint">
-      Marca varios productos y aplica cambios comunes.
-    </div>
-  </div>
-
-  <div class="gestion-header">
-    <span></span>
-    <span>Nombre</span>
-    <span>Precio</span>
-    <span>Comidas</span>
-    <span>Para</span>
-    <span>✓</span>
-  </div>
-
-  <div id="lista-gestion"></div>
-</section>
 
     <!-- Vista Stock (buscador ligero) -->
     <section id="vista-stock" class="oculto">
@@ -238,8 +208,9 @@
   </div>
 </div>
 
+<button id="btn-top" class="btn-top oculto" title="Subir">⬆️</button>
 <script src="script.productos.js"></script>
-<script src="script.stock.js"></script>
+<script src="script.recetas.js"></script>
 
 </body>
 </html>
