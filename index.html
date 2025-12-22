@@ -32,32 +32,43 @@
   <div id="app">
 
     <!-- ÚNICO switch arriba -->
-    <div id="tabs-recetas" style="display:flex;gap:8px;margin:10px 12px 0;">
-      <button id="tab-productos" class="tab-soft active">Productos</button>
-      <button id="tab-recetas" class="tab-soft">Recetas</button>
-    </div>
+<div id="tabs-recetas" style="display:flex;gap:8px;margin:10px 12px 0;">
+  <button id="tab-productos" class="tab-soft active">Productos</button>
+  <button id="tab-recetas" class="tab-soft">Recetas</button>
+  <button id="tab-stock" class="tab-soft">Stock</button>
+  <button id="tab-gestion" class="tab-soft">Gestión</button>
+</div>
 
     <!-- Vista Productos (tu layout intacto) -->
-    <header>
-      <div id="total-estimado" style="font-weight: bold; font-size: 18px; margin-bottom: 10px;">
-        Total estimado: 0,00 €
-      </div>
+<header>
+  <div id="total-estimado" style="font-weight: bold; font-size: 18px; margin-bottom: 4px;">
+    Total compra: 0,00 €
+  </div>
 
-      <select id="selector-super">
-        <option value="Mercadona">Mercadona</option>
-        <option value="Eroski">Eroski</option>
-        <option value="Chino">Chino</option>
-        <option value="Carrefour">Carrefour</option>
-        <option value="Otros">Otros</option>
-      </select>
+  <!-- NUEVO: totales por persona -->
+  <div id="total-charly" style="font-size: 14px; opacity: 0.9; margin-bottom: 2px;">
+    Charly: 0,00 € — 0 comidas (~0,0 días)
+  </div>
+  <div id="total-laura" style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">
+    Laura: 0,00 € — 0 comidas (~0,0 días)
+  </div>
+  <!-- FIN NUEVO -->
 
-      <input type="text" id="input-producto" placeholder="Escribe un producto..." />
-      <button id="btn-agregar">➕ Añadir</button>
+  <select id="selector-super">
+    <option value="Mercadona">Mercadona</option>
+    <option value="Eroski">Eroski</option>
+    <option value="Chino">Chino</option>
+    <option value="Carrefour">Carrefour</option>
+    <option value="Otros">Otros</option>
+  </select>
 
-      <select id="filtro-categoria" style="margin-top: 10px; padding: 8px; border-radius: 8px;">
-        <option value="">Todas las categorías</option>
-      </select>
-    </header>
+  <input type="text" id="input-producto" placeholder="Escribe un producto..." />
+  <button id="btn-agregar">➕ Añadir</button>
+
+  <select id="filtro-categoria" style="margin-top: 10px; padding: 8px; border-radius: 8px;">
+    <option value="">Todas las categorías</option>
+  </select>
+</header>
 
     <section id="lista-productos"></section>
 
@@ -69,7 +80,47 @@
       </div>
       <div id="lista-recetas" class="lista" style="padding:0 12px 12px;"></div>
     </section>
+<!-- Vista Gestión (nueva pestaña) -->
+<section id="vista-gestion" class="oculto">
+  <div class="gestion-toolbar">
+    <div class="gestion-bulk-row">
+      <input id="bulk-precio" type="number" step="0.01" placeholder="Precio €" />
+      <input id="bulk-comidas" type="number" step="1" min="0" placeholder="Comidas/pack" />
+      <select id="bulk-para">
+        <option value="">Para…</option>
+        <option value="ambos">Ambos</option>
+        <option value="charly">Charly</option>
+        <option value="laura">Laura</option>
+      </select>
+      <button id="btn-bulk-aplicar">Aplicar</button>
+    </div>
+    <div class="gestion-hint">
+      Marca varios productos y aplica cambios comunes.
+    </div>
+  </div>
 
+  <div class="gestion-header">
+    <span></span>
+    <span>Nombre</span>
+    <span>Precio</span>
+    <span>Comidas</span>
+    <span>Para</span>
+    <span>✓</span>
+  </div>
+
+  <div id="lista-gestion"></div>
+</section>
+
+    <!-- Vista Stock (buscador ligero) -->
+    <section id="vista-stock" class="oculto">
+      <div class="stock-toolbar">
+        <input id="buscar-stock" class="stock-search" placeholder="Buscar producto por nombre" />
+        <div class="stock-hint">Los productos se crean aquí al añadirlos a la lista.</div>
+      </div>
+      <div id="stock-resultado" class="lista-stock"></div>
+      <div id="stock-resumen" class="stock-resumen"></div>
+      <div id="stock-visibles" class="stock-visible-list"></div>
+    </section>
   </div>
 
   <!-- Modal edición de producto (tuyo, intacto) -->
