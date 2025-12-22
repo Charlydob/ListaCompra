@@ -46,6 +46,7 @@ const GROUPS = [
   { k: "extra", label: "Extra" },
   { k: "desayuno", label: "Desayuno" },
   { k: "snack", label: "Snack" },
+    { k: "plato", label: "Plato (listo)" },
 ];
 
 
@@ -65,52 +66,62 @@ const PRESETS = {
   const racionesDisponibles = (p) => (parseStockValor(p.stock) * comidasPack(p)) / porComida(p);
 
 function computeGroupTotals() {
-  const tot = { base: 0, prot: 0, verd: 0, extra: 0, desayuno: 0, snack: 0 };
+  const tot = {
+    base: 0, prot: 0, verd: 0, extra: 0,
+    desayuno: 0, snack: 0, plato: 0
+  };
 
   for (const p of getProductos()) {
     if (p.visibleStock === false) continue;
     const g = (p.stockGrupo || "").toLowerCase();
-    if (!(g in tot)) continue;          // ✅ correcto
+    if (!(g in tot)) continue;
     tot[g] += racionesDisponibles(p);
   }
   return tot;
 }
 
 
-  function computePresetMeals() {
-    const preset = PRESETS[presetKey] || PRESETS.platos;
-    const totals = computeGroupTotals();
 
-    const req = { ...preset.req };
-    if (includeExtras) req.extra = 1;
+function computePresetMeals() {
+  const preset = PRESETS[presetKey] || PRESETS.platos;
+  const totals = computeGroupTotals();
 
-    let minMeals = Infinity;
-    let limiting = null;
+  // Parte "combo" (base/prot/verd/etc)
+  const req = { ...preset.req };
+  if (includeExtras && presetKey === "platos") req.extra = 1; // si quieres que extras solo afecte a Platos
 
-    for (const [g, need] of Object.entries(req)) {
-      const cap = need > 0 ? (totals[g] || 0) / need : Infinity;
-      if (cap < minMeals) {
-        minMeals = cap;
-        limiting = g;
-      }
+  let comboMeals = Infinity;
+  let limiting = null;
+
+  for (const [g, need] of Object.entries(req)) {
+    const cap = need > 0 ? (totals[g] || 0) / need : Infinity;
+    if (cap < comboMeals) {
+      comboMeals = cap;
+      limiting = g;
     }
-
-    if (!Number.isFinite(minMeals)) minMeals = 0;
-    minMeals = Math.max(0, Math.floor(minMeals * 10) / 10); // 0.1 precision
-
-    // “culpables”: 3 más bajos del grupo limitante
-    const culprits =
-      limiting && totals[limiting] > 0
-        ? getProductos()
-            .filter((p) => p.visibleStock !== false)
-            .filter((p) => (p.stockGrupo || "").toLowerCase() === limiting)
-            .map((p) => ({ p, r: racionesDisponibles(p) }))
-            .sort((a, b) => a.r - b.r)
-            .slice(0, 3)
-        : [];
-
-    return { preset, totals, req, minMeals, limiting, culprits };
   }
+
+  if (!Number.isFinite(comboMeals)) comboMeals = 0;
+  comboMeals = Math.max(0, Math.floor(comboMeals * 10) / 10);
+
+  // Parte "plato listo" (solo suma en preset Platos)
+  const readyMeals = presetKey === "platos" ? Math.max(0, totals.plato || 0) : 0;
+
+  const totalMeals = Math.floor((comboMeals + readyMeals) * 10) / 10;
+
+  const culprits =
+    limiting && (totals[limiting] || 0) > 0
+      ? getProductos()
+          .filter((p) => p.visibleStock !== false)
+          .filter((p) => (p.stockGrupo || "").toLowerCase() === limiting)
+          .map((p) => ({ p, r: racionesDisponibles(p) }))
+          .sort((a, b) => a.r - b.r)
+          .slice(0, 3)
+      : [];
+
+  return { preset, totals, req, comboMeals, readyMeals, totalMeals, limiting, culprits };
+}
+
 
   function ensureMealsPanel() {
     const ref = stockResumen();
@@ -129,7 +140,7 @@ function computeGroupTotals() {
     const el = ensureMealsPanel();
     if (!el) return;
 
-    const { preset, totals, minMeals, limiting, culprits } = computePresetMeals();
+const { preset, totals, comboMeals, readyMeals, totalMeals, limiting, culprits } = computePresetMeals();
 
     const chip = (key, label) => {
       const b = document.createElement("button");
@@ -181,16 +192,18 @@ const limitingLabel =
 
     const line1 = document.createElement("div");
     line1.className = "stock-meals-line";
-    line1.innerHTML = `
-      <div><b>${preset.label}:</b> ${minMeals} comidas</div>
-      <div class="stock-meals-small">Limita: <b>${limitingLabel}</b></div>
-    `;
+line1.innerHTML = `
+  <div><b>${preset.label}:</b> ${totalMeals} comidas</div>
+  <div class="stock-meals-small">Limita: <b>${limitingLabel}</b></div>
+`;
+
 
     const line2 = document.createElement("div");
     line2.className = "stock-meals-small";
 line2.textContent =
+  `Combo ${comboMeals.toFixed(1)} · Plato listo ${readyMeals.toFixed(1)} · ` +
   `Base ${totals.base.toFixed(1)} · Prot ${totals.prot.toFixed(1)} · Verd ${totals.verd.toFixed(1)} · ` +
-  `Extra ${totals.extra.toFixed(1)} · Des ${totals.desayuno.toFixed(1)} · Snack ${totals.snack.toFixed(1)}`;
+  `Extra ${totals.extra.toFixed(1)} · Des ${totals.desayuno.toFixed(1)} · Snack ${totals.snack.toFixed(1)} · Plato ${totals.plato.toFixed(1)}`;
 
     const line3 = document.createElement("div");
     line3.className = "stock-meals-small";
