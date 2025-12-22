@@ -1,0 +1,253 @@
+/* ===== Stock (aislado) ===== */
+.stock-toolbar{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin:12px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  box-shadow:0 12px 26px rgba(0,0,0,.32), 0 0 0 1px rgba(94,232,255,.08) inset;
+}
+.stock-search{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(94,232,255,.18);
+  background: linear-gradient(135deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  box-shadow:0 6px 18px rgba(0,0,0,.28), 0 0 0 1px rgba(94,232,255,.12) inset;
+  font-size:15px;
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+.stock-search:focus{
+  border-color:rgba(94,232,255,.6);
+  box-shadow:0 0 0 6px #5ee8ff14, 0 14px 28px rgba(0,0,0,.42);
+}
+.stock-hint{font-size:13px; color:var(--muted);}
+
+.lista-stock{display:flex; flex-direction:column; gap:10px; padding:0 12px 12px;}
+
+.stock-resumen{
+  margin:0 12px 8px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  background:var(--glass);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  font-weight:600;
+  flex-wrap:wrap;
+}
+.stock-chip{
+  padding:8px 12px;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  background: linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+  color:var(--txt);
+  cursor:pointer;
+  font-weight:700;
+  letter-spacing:.2px;
+  transition: transform .06s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.stock-chip.activo{
+  border-color: var(--opal-cyan);
+  box-shadow:0 0 0 8px #5ee8ff12, 0 14px 28px rgba(0,0,0,.28);
+  transform: translateY(-1px);
+}
+.stock-chip:active{transform:translateY(1px)}
+
+.stock-visible-list{display:flex; flex-direction:column; gap:10px; padding:0 12px 12px;}
+
+.stock-visible-item{
+  display:grid;
+  grid-template-columns: 1fr 44px 44px 44px;
+  gap:10px;
+  align-items:center;
+  min-height:48px;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  box-shadow:0 12px 24px rgba(0,0,0,.32);
+  font-size:13px;
+}
+.stock-visible-item .stock-nombre{
+  font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.stock-visible-item .stock-input{
+  width:40px; min-width:40px; max-width:40px;
+  height:36px; font-size:13px; padding:0 6px; text-align:right; border-radius:10px;
+}
+.stock-visible-item button:active{transform:translateY(1px)}
+
+.stock-card{
+  padding:10px; border-radius:12px; border:1px solid var(--stroke);
+  background: var(--glass);
+  box-shadow:0 10px 20px rgba(0,0,0,.35);
+
+  display:grid;
+  grid-template-columns: 1fr auto auto;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "left  busq  meta"
+    "left  busq  ctrl";
+  gap: 8px 12px;
+  align-items:start;
+}
+
+.stock-card-titulo{
+  grid-area:left;
+  font-weight:700;
+  font-size:16px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+}
+
+.stock-card-meta{
+  grid-area: meta;
+  justify-self: end;
+
+  font-size:13px;
+  color:var(--muted);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 80px;
+}
+
+.stock-card-datos{
+  grid-area:left;
+  margin-top: 22px;
+
+  font-size:13px;
+  color:var(--txt);
+  opacity:.9;
+
+  display:grid;
+  grid-template-columns: auto auto;
+  gap: 8px;
+  align-content:start;
+}
+
+.stock-card-controles{
+  grid-area:ctrl;
+  justify-self:end;
+
+  display:flex;
+  align-items:end;
+  gap:8px;
+}
+
+.stock-card-controles button{
+  min-width:3px;
+  padding:2px 10px;
+  border-radius:10px;
+  border:1px solid var(--stroke);
+  background:var(--glass-2);
+  color:var(--txt);
+}
+.stock-card-controles span{min-width:4px; text-align:center; font-weight:700;}
+
+.stock-card-controles-busqueda{
+  grid-area:busq;
+  display:flex;
+  align-items:center;
+  gap:8px;
+
+  margin-left:20px;
+  margin-bottom:0;
+}
+
+.stock-toggle,
+.stock-add-btn{
+  min-width:3px;
+  padding:4px 1px;
+  border-radius:10px;
+  border:1px solid var(--stroke);
+  background:var(--glass-2);
+  color:var(--txt);
+  font-size:16px;
+  cursor:pointer;
+}
+.stock-add-btn{
+  min-width:36px;
+  padding:8px;
+  border-radius:10px;
+  border:1px solid transparent;
+  background:transparent;
+  font-size:18px;
+  cursor:pointer;
+  color:var(--txt);
+}
+.stock-placeholder{padding:14px; color:var(--muted);}
+/* ===== Low stock (rojo) ===== */
+.stock-card.low-stock,
+.stock-visible-item.low-stock{
+  border-color: rgba(255,88,101,.55);
+  box-shadow: 0 0 0 8px rgba(255,88,101,.08), 0 12px 24px rgba(0,0,0,.32);
+}
+
+.tarjeta-producto.low-stock{
+  border-color: rgba(255,88,101,.45);
+  box-shadow: 0 0 0 6px rgba(255,88,101,.08), 0 14px 28px rgba(0,0,0,.34);
+}
+
+.stock-low-badge{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:11px; color: rgba(255,88,101,.95);
+  border:1px solid rgba(255,88,101,.35);
+  background: rgba(255,88,101,.08);
+  padding:2px 8px;
+  border-radius:999px;
+}
+
+/* ===== Mini settings dentro de "visibles" ===== */
+.stock-nombre-wrap{display:flex; flex-direction:column; gap:6px; min-width:0;}
+.stock-mini{
+  display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+}
+.stock-mini select,
+.stock-mini input{
+  height:26px;
+  border-radius:10px;
+  border:1px solid var(--stroke);
+  background: var(--glass-2);
+  color: var(--txt);
+  font-size:12px;
+  padding:0 8px;
+}
+.stock-mini input{width:72px; text-align:right;}
+.stock-mini .btn-auto{
+  height:26px; padding:0 10px; border-radius:10px;
+  border:1px solid var(--stroke);
+  background: var(--glass-2);
+  color: var(--txt);
+  cursor:pointer;
+}
+.stock-mini .btn-auto.activo{
+  border-color: rgba(255,88,101,.55);
+  box-shadow: 0 0 0 6px rgba(255,88,101,.10);
+}
+
+/* ===== Panel platos estimados ===== */
+.stock-meals{
+  margin:0 12px 10px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  background: var(--glass);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.stock-meals-top{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;}
+.stock-meals-chips{display:flex; gap:8px; flex-wrap:wrap;}
+.stock-meals .stock-chip{padding:7px 10px; font-size:13px;}
+.stock-meals-line{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;}
+.stock-meals-small{font-size:12px; color:var(--muted);}
