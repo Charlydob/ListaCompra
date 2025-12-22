@@ -320,6 +320,10 @@ line2.textContent =
     }
 
     card.append(titulo, meta, data, controles, filaExtra);
+    card.addEventListener("click", (e) => {
+      if ([inpStock, btnSubir, btnBajar, visibilidad, btnALista].includes(e.target)) return;
+      window.lc_abrirModalEdicion?.(p);
+    });
     return card;
   };
 
@@ -428,6 +432,10 @@ line2.textContent =
     });
 
     fila.append(nombreWrap, inpStock, selVisible, btnLista);
+    fila.addEventListener("click", (e) => {
+      if ([inpStock, selG, inpMin, btnAuto, selVisible, btnLista].includes(e.target)) return;
+      window.lc_abrirModalEdicion?.(p);
+    });
     return fila;
   };
 
@@ -454,7 +462,10 @@ line2.textContent =
       return;
     }
 
-    coincidencias.forEach((p) => cont.appendChild(crearCardStock(p)));
+    coincidencias.forEach((p) => {
+      const card = p.visibleStock !== false ? crearItemVisible(p) : crearCardStock(p);
+      cont.appendChild(card);
+    });
   };
 
   const renderStockResumen = () => {
