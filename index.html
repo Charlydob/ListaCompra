@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Lista de la Compra</title>
   <link rel="stylesheet" href="estilos.css" />
+  <link rel="stylesheet" href="stock.css" />
+
   <link rel="apple-touch-icon" href="icono.png">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4590ff" media="(prefers-color-scheme: light)">
@@ -39,7 +41,6 @@
 </div>
 
     <!-- Vista Productos (tu layout intacto) -->
-<section id="vista-productos">
 <header>
   <div id="total-estimado" style="font-weight: bold; font-size: 18px; margin-bottom: 4px;">
     Total compra: 0,00 €
@@ -73,7 +74,6 @@
     <section id="lista-productos"></section>
 
     <!-- Vista Recetas (nueva pestaña) -->
-</section>
     <section id="vista-recetas" class="oculto">
       <div class="recetas-toolbar" style="display:flex;gap:8px;align-items:center;margin:10px 12px;">
         <input id="buscar-recetas" placeholder="Buscar receta..." style="flex:1" />
@@ -82,6 +82,7 @@
       <div id="lista-recetas" class="lista" style="padding:0 12px 12px;"></div>
     </section>
 <!-- Vista Gestión (nueva pestaña) -->
+<section id="vista-gestion" class="oculto"></section>
 
     <!-- Vista Stock (buscador ligero) -->
     <section id="vista-stock" class="oculto">
@@ -95,6 +96,8 @@
     </section>
   </div>
 
+  <button id="btn-scroll-top" aria-label="Volver arriba">⬆</button>
+
   <!-- Modal edición de producto (tuyo, intacto) -->
   <div id="modal-edicion" class="modal oculto">
     <div class="modal-contenido-opal-horizontal">
@@ -104,22 +107,17 @@
 
       <div class="campos-laterales">
         <h2>Editar producto</h2>
-
-        <label>Nombre</label>
+<div class="inputs-meta">
         <input type="text" id="modal-nombre" />
 
-        <label>Precio (€)</label>
         <input type="number" id="modal-precio" step="0.01" />
 
-        <label>Super</label>
         <select id="modal-super"></select>
 
-        <label>Categoría</label>
         <input type="text" id="modal-categoria" placeholder="Ej. Frutas" />
 
-        <label>Imagen</label>
         <input type="file" id="modal-imagen" accept="image/*" capture="environment" />
-
+</div>
         <div class="modal-botones">
           <button id="btn-guardar-cambios">💾 Guardar</button>
           <button id="btn-borrar-producto">🗑️ Borrar</button>
@@ -208,9 +206,8 @@
   </div>
 </div>
 
-<button id="btn-top" class="btn-top oculto" title="Subir">⬆️</button>
 <script src="script.productos.js"></script>
-<script src="script.recetas.js"></script>
+<script src="script.stock.js"></script>
 
 </body>
 </html>
