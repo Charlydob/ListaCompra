@@ -1,4 +1,4 @@
 {
-  "name": "Guardias médicas", "short_name": "Guardias", "start_url": "/", "display": "standalone",
-  "background_color": "#f5f7f5", "theme_color": "#146356", "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "name": "Guardias médicas", "short_name": "Guardias", "start_url": "./", "display": "standalone",
+  "background_color": "#f5f7f5", "theme_color": "#146356", "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

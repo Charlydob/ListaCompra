@@ -8,7 +8,7 @@ Aplicación web móvil para que un médico residente marque sus guardias en un c
 
 - React 19 + TypeScript + Vite
 - Firebase Authentication (email y contraseña)
-- Cloud Firestore
+- Firebase Realtime Database (infraestructura recuperada de la aplicación anterior)
 - `date-fns` para fechas
 - Vitest para la lógica de dominio
 - CSS responsive sin framework y manifiesto PWA
@@ -23,7 +23,7 @@ cp .env.example .env
 npm run dev
 ```
 
-La app compila aun sin credenciales; en ese caso muestra un aviso claro y deshabilita el acceso.
+Si Firebase falla, la pantalla de acceso sigue visible y el modo local guarda perfil y guardias en `localStorage`.
 
 ```bash
 npm run build
@@ -39,6 +39,7 @@ npm test
 ```dotenv
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_DATABASE_URL=
 VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
@@ -46,10 +47,10 @@ VITE_FIREBASE_APP_ID=
 ```
 
 4. En **Authentication → Sign-in method**, habilita **Correo electrónico/contraseña** (no hace falta habilitar enlace por email).
-5. En **Firestore Database**, crea una base de datos. Elige la región adecuada y publica las reglas de `firestore.rules` desde la consola, o instala Firebase CLI, inicia sesión y ejecuta `firebase deploy --only firestore:rules`.
+5. La base usada históricamente es **Realtime Database**. Publica `database.rules.json` con `firebase deploy --only database`.
 6. Añade los dominios en los que despliegues la app a **Authentication → Settings → Authorized domains**.
 
-Las reglas limitan cualquier lectura o escritura bajo `users/{uid}` al usuario autenticado con ese mismo `uid`. La aplicación almacena los ajustes en `users/{uid}/profile/settings` y cada mes en `users/{uid}/months/{YYYY-MM}`.
+Las reglas limitan `guardSalaryApp/users/{uid}` al usuario autenticado. El modo local no requiere Firebase.
 
 ## Arquitectura
 
@@ -61,7 +62,7 @@ src/
 │   └── holidays/            # Festivos organizados por año
 ├── domain/
 │   └── calculateSalary.ts   # Clasificación y cálculo puro, sin React/Firebase
-├── services/userData.ts     # Persistencia del perfil y meses
+├── data/storage/            # Repositorios intercambiables local y Firebase
 ├── firebase.ts              # Inicialización por variables de entorno
 └── styles.css               # Diseño responsive
 ```
@@ -76,4 +77,4 @@ src/
 
 ## Despliegue
 
-Genera los archivos estáticos con `npm run build` y despliega `dist/` en cualquier hosting compatible con SPA (por ejemplo Firebase Hosting, Vercel o Netlify). No se requiere ni se recomienda GitHub Pages.
+El workflow `.github/workflows/deploy-pages.yml` compila y publica exclusivamente `dist/` en GitHub Pages. `firebase.json` también queda preparado para Firebase Hosting con fallback SPA.
